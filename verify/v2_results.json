@@ -1,0 +1,44 @@
+{
+  "n_attempted": 2,
+  "n_scored": 2,
+  "zero_unverified_quote_rate": 0.5,
+  "citation_accuracy": 1.0,
+  "holding_direction_accuracy": 1.0,
+  "adversarial_clean_rate": 0.5,
+  "thresholds": {
+    "zero_unverified_quote_rate": "20/20 required (this run: n=2)",
+    "citation_accuracy": "20/20 required",
+    "holding_direction_accuracy": "20/20 required"
+  },
+  "results": [
+    {
+      "case_name": "Lucine Trim v. Reward Zone USA LLC",
+      "gate_verdict": "pass",
+      "zero_unverified_quotes": true,
+      "citation_ok": true,
+      "holding_ok": true,
+      "adversarial_clean": true,
+      "categories_drafted": [
+        "TCPA",
+        "Pre-Recorded Voice",
+        "Appellate Tracker"
+      ],
+      "categories_historical": "TCPA"
+    },
+    {
+      "case_name": "Rojas v. HSBC Card Services Inc.",
+      "gate_verdict": "needs_review",
+      "zero_unverified_quotes": false,
+      "citation_ok": true,
+      "holding_ok": true,
+      "adversarial_clean": false,
+      "categories_drafted": [
+        "Privacy",
+        "Call Recording -- Pen. Code 632",
+        "Consent",
+        "Appellate Tracker"
+      ],
+      "categories_historical": "Call Recording -- Pen. Code 632,Privacy,Consent,Appellate Tracker"
+    }
+  ]
+}
