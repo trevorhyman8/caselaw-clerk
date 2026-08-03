@@ -129,6 +129,13 @@ def _build_repair_instruction(gate_result, fact_sheet, case_meta: dict) -> str:
                 f'Remove it unless it appears verbatim in the source opinion.'
             )
 
+    # A posture or judge miss ALONE verdicts "warn" (gate.py), not
+    # needs_review — cosmetic, ship-eligible, a human can glance and decide
+    # it's fine, not worth an extra LLM round-trip. So these two branches
+    # only actually execute when a posture/judge miss happens to co-occur
+    # with a REAL hard failure that's already forcing a repair attempt —
+    # intentional (fix both for free in the same pass), not dead code, even
+    # though they never fire in isolation.
     fact_fails = [
         a["name"] for a in gate_result.provenance.get("fact_assertions", []) if not a.get("passed")
     ]
