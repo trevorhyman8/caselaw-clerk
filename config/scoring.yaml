@@ -12,6 +12,15 @@ topic_pts:
   regulatory: 6    # 287
   ucl: 5           # 110+62
 
+# Scott's actual named practice statutes (per his firm bio: TILA, UDAP/UCL,
+# TCPA, FCRA, FDCPA, plus privacy/cybersecurity — he's CIPP/CIPM/CIPT
+# certified). At least one of these must be present for a case to score
+# above zero at all; class/regulatory alone ("some class action", "some
+# agency proceeding") aren't specific to his practice and only count as
+# boosters on top of a core match. See pipeline/score/score.py's docstring
+# for the real false positive (Montera v. Premier Nutrition) this prevents.
+core_families: [fdcpa, tcpa, fcra, privacy, arbitration, ucl]
+
 court_mult:
   scotus: 1.2
   ca9: 1.1

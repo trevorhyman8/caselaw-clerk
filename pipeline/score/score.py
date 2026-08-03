@@ -13,6 +13,26 @@ from pipeline.settings import ROOT
 
 _STATUTE_TERM_RE_CACHE: dict[str, re.Pattern] = {}
 
+# Found via a real false positive: Montera v. Premier Nutrition — a
+# supplement-labeling false-advertising class action with no relation to
+# Scott's practice — scored 27.1 (well above the digest floor of 6) because
+# its 70,000-char opinion CITES a TCPA case and an FCRA case as precedent
+# for unrelated damages/interest reasoning. Full-text keyword search can't
+# tell "this case is about X" from "this case cites a case about X."
+#
+# The fix is NOT an industry filter (tried that first: requiring a
+# bank/lender/privacy keyword nearby — but it wrongly zeroed out Coffey v.
+# Fast Easy Offer and Howard v. RNC, both genuine TCPA cases against a real
+# estate company and a political committee respectively. TCPA defense is
+# core to Scott's practice regardless of the defendant's industry; robocall
+# law doesn't care who's calling). The actual fix: courts state what a case
+# is ABOUT right at the start — case caption, then a summary/opening
+# paragraph — so a statute family only counts if it shows up in that
+# framing. A citation to unrelated precedent, buried deep in the analysis,
+# doesn't. Verified: Montera's TCPA/FCRA mentions were both well past this
+# window; Coffey's and Howard's were in the first ~800 characters.
+EARLY_WINDOW_CHARS = 3000
+
 
 def _load_yaml(name: str) -> dict:
     with open(ROOT / "config" / name) as f:
@@ -30,10 +50,17 @@ def _family_patterns(queries_cfg: dict) -> dict[str, re.Pattern]:
     return out
 
 
-def detect_statutes(text: str, queries_cfg: dict | None = None) -> list[str]:
+def detect_statutes(text: str, queries_cfg: dict | None = None, case_name: str = "") -> list[str]:
+    """Only counts a family if it appears in the case's OWN framing — the
+    caption plus the opinion's opening ~3000 chars, where courts state what
+    a case is actually about — not anywhere in the full text, which for a
+    long opinion is mostly other cases' holdings being cited as precedent.
+    See EARLY_WINDOW_CHARS's comment for why this replaced a naive
+    full-text search."""
     queries_cfg = queries_cfg or _load_yaml("queries.yaml")
     patterns = _family_patterns(queries_cfg)
-    return [key for key, pat in patterns.items() if pat.search(text)]
+    haystack = f"{case_name}\n{text[:EARLY_WINDOW_CHARS]}"
+    return [key for key, pat in patterns.items() if pat.search(haystack)]
 
 
 def detect_posture_hits(text: str, queries_cfg: dict | None = None) -> list[str]:
@@ -44,6 +71,7 @@ def detect_posture_hits(text: str, queries_cfg: dict | None = None) -> list[str]
 def score_case(
     text: str,
     court_id: str,
+    case_name: str = "",
     historical_judges: set[str] | None = None,
     judge: str | None = None,
 ) -> dict:
@@ -55,9 +83,34 @@ def score_case(
     if len(text.strip()) < scoring_cfg["hard_reject_min_chars"]:
         return {"score": 0, "breakdown": {"hard_reject": "opinion text too short"}}
 
-    statutes = detect_statutes(text, queries_cfg)
+    statutes = detect_statutes(text, queries_cfg, case_name=case_name)
     if not statutes:
-        return {"score": 0, "breakdown": {"hard_reject": "no recognized statute family"}}
+        return {
+            "score": 0,
+            "breakdown": {
+                "hard_reject": "no recognized statute family in the case's own framing "
+                "(caption + opening ~3000 chars) — a full-text match elsewhere is usually a "
+                "citation to unrelated precedent, not the case's actual subject"
+            },
+        }
+    if not any(s in scoring_cfg["core_families"] for s in statutes):
+        # "class"/"regulatory" alone means "some class action" or "some
+        # agency proceeding" — true of thousands of cases with nothing to
+        # do with Scott's practice. Found live: Montera v. Premier
+        # Nutrition (a supplement-labeling class action) legitimately
+        # mentions class certification in its own opening, so the
+        # early-window fix alone let it through at a lower score. Real
+        # relevance requires one of his actual named statutes (config's
+        # core_families) to be present — class/regulatory/ucl remain valid
+        # score BOOSTERS below (secondary_pts) but can't carry a case alone.
+        return {
+            "score": 0,
+            "breakdown": {
+                "hard_reject": f"only non-core families matched ({statutes}) — needs at least "
+                "one of Scott's actual named statutes (config/scoring.yaml core_families), not "
+                "just a generic class-action/regulatory posture"
+            },
+        }
 
     topic_pts = scoring_cfg["topic_pts"]
     sorted_statutes = sorted(statutes, key=lambda s: topic_pts.get(s, 0), reverse=True)

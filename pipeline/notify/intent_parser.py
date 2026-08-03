@@ -24,7 +24,7 @@ Context: {context}
 Return JSON: {{"intent": one of {intents}, "slot": "the digest number(s) this refers to, comma-separated if more than one (e.g. '1' or '1,3'), else null", "confidence": 0.0-1.0}}
 
 Rules:
-- A number, or a few numbers ("1", "1 and 3", "1, 3, 4") -> select_candidate with slot="1,3,4" (comma-separated, no spaces) — the user is picking one or several digest items to draft AT ONCE, ONLY if context says a digest is active
+- A number, or a few numbers ("1", "1 and 3", "1, 3, 4") -> select_candidate with slot="1,3,4" (comma-separated, no spaces) — the user is picking one or several digest items to draft, or retrying one that failed. This applies whenever context shows digest_items > 0, REGARDLESS of conversation_state — a bare number can mean "retry this one" even after drafting has started, not just right after the morning digest
 - "publish 1" / "publish" (when only one draft is ready) -> approve_publish with slot=the number if given, else null (this does NOT itself publish anything — a separate confirm step follows)
 - A bare "yes" ONLY counts as confirm_yes if context says a publish confirmation is pending; otherwise it's unknown
 - "edit 1: shorten the intro" / "shorten the intro" (when only one draft is ready) -> request_edit, slot = the number if given else null, and the FULL original message text is what gets used as the edit instruction (don't strip anything into a separate field)

@@ -45,7 +45,7 @@ def score_pending_cases() -> list[dict]:
 
     scored = []
     for r in rows:
-        result = score_case(r["content_text"], r["court_id"], judge=r["judge"])
+        result = score_case(r["content_text"], r["court_id"], case_name=r["case_name"], judge=r["judge"])
         if result["score"] > 0:
             scored.append({
                 "case_id": r["case_id"], "case_name": r["case_name"],

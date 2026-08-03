@@ -91,6 +91,18 @@ CANDIDATE_REF_MAP_HELP = (
 _RANK_RE = re.compile(r"\d+")
 
 
+def _is_actionable(item: dict) -> bool:
+    """Single source of truth for "can this rank be published as-is" —
+    used everywhere that decision matters (approve_publish gating,
+    has-anything-ready state transitions, the ready-list hint message) so
+    they can't drift out of sync with each other."""
+    return item.get("gate_status") in ("pass", "warn")
+
+
+def has_actionable(conv: Conversation) -> bool:
+    return any(_is_actionable(v) for v in conv.ready.values())
+
+
 def send_digest(conv: Conversation, digest_items: list[dict]) -> Action:
     conv.digest_items = digest_items
     conv.state = State.DIGEST_SENT
@@ -158,11 +170,38 @@ def handle(conv: Conversation, intent: str, slot: str | None, raw_text: str) -> 
     if conv.state in (State.DRAFTING, State.PREVIEW_SENT, State.NEEDS_REVIEW):
         # Even while some cases are still drafting, Scott can act on ones
         # that are already ready (e.g. "publish 1" while 3 is still cooking).
+        if intent == "select_candidate" and slot:
+            # A rank can reach here already fully resolved (a hard pipeline
+            # exception removes it from both pending_ranks and ready — see
+            # telegram_bot.py's exception handler), and the bot explicitly
+            # tells Scott to reply the number again in that case. Honor
+            # that: retry it as a fresh single-item batch. Ranks still
+            # in-flight or already showing a result are NOT retriable this
+            # way — this only fires for a rank that's genuinely gone.
+            items = _resolve_candidates(conv, slot)
+            retriable = [
+                i for i in items
+                if i["rank"] not in conv.pending_ranks and i["rank"] not in conv.ready
+            ]
+            if retriable:
+                # Adds to pending_ranks WITHOUT touching conv.ready — unlike
+                # _start_batch (used only from DIGEST_SENT, where nothing
+                # else is in flight yet), a retry here must not clobber
+                # other ranks from the same original batch that already
+                # succeeded or are still drafting.
+                conv.pending_ranks |= {i["rank"] for i in retriable}
+                conv.state = State.DRAFTING
+                hooks = "\n".join(f"  {i['rank']}️⃣ {i['hook']}" for i in retriable)
+                return Action(
+                    "start_draft",
+                    text=f"Retrying:\n{hooks}" if len(retriable) > 1 else f"Retrying {retriable[0]['hook']}.",
+                    case_ids=[i["case_id"] for i in retriable], ranks=[i["rank"] for i in retriable],
+                )
         if intent == "approve_publish":
             rank = _target_rank(conv, slot)
             if rank is None:
                 return Action("send_message", text=_ambiguous_rank_message(conv, "publish"))
-            if conv.ready[rank].get("gate_status") not in ("pass", "warn"):
+            if not _is_actionable(conv.ready[rank]):
                 return Action(
                     "send_message",
                     text=f"{rank}️⃣ hasn't cleared verification yet, so it can't be published. "
@@ -197,6 +236,19 @@ def handle(conv: Conversation, intent: str, slot: str | None, raw_text: str) -> 
             rank = _target_rank(conv, slot)
             if rank is not None:
                 conv.ready.pop(rank, None)
+                # Recompute state from what's actually left — before this
+                # fix, rejecting the last item from NEEDS_REVIEW left state
+                # stuck there with nothing left to act on (a dead-end that
+                # then fell through to a "publish/edit/skip" prompt naming
+                # actions with nothing to apply them to).
+                if conv.pending_ranks:
+                    conv.state = State.DRAFTING
+                elif has_actionable(conv):
+                    conv.state = State.PREVIEW_SENT
+                elif conv.ready:
+                    conv.state = State.NEEDS_REVIEW
+                else:
+                    conv.state = State.IDLE
                 return Action("send_message", text=f"Discarded {rank}️⃣.")
         if conv.state == State.DRAFTING and not conv.ready:
             return Action("send_message", text="Still working on it — I'll message you as each is ready.")
@@ -273,10 +325,9 @@ def draft_needs_review(
     }
     conv.pending_ranks.discard(rank)
     if not conv.pending_ranks:
-        has_actionable = any(v.get("gate_status") in ("pass", "warn") for v in conv.ready.values())
-        conv.state = State.PREVIEW_SENT if has_actionable else State.NEEDS_REVIEW
+        conv.state = State.PREVIEW_SENT if has_actionable(conv) else State.NEEDS_REVIEW
 
-    parts = [f"{rank}️⃣ didn't clear verification — here's what it has:"]
+    parts = [f"{rank}️⃣ didn't clear verification:\n" + "\n".join(f"- {r}" for r in reasons)]
     if report_card:
         parts.append(report_card)
     if draft_text:
@@ -300,7 +351,7 @@ def _ambiguous_rank_message(conv: Conversation, verb: str) -> str:
     if not conv.ready:
         return "Nothing's ready yet — I'll message you as soon as a draft clears."
     options = ", ".join(
-        f"{r}{'' if v.get('gate_status') in ('pass', 'warn') else ' (needs a fix first)'}"
+        f"{r}{'' if _is_actionable(v) else ' (needs a fix first)'}"
         for r, v in sorted(conv.ready.items())
     )
     return f"Which one? Reply '{verb} N' — ready: {options}"

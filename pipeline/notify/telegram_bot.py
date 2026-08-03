@@ -133,10 +133,10 @@ async def _run_batch_and_reply(update: Update, conv: sm.Conversation, case_ids: 
             log.exception(f"draft pipeline failed for rank {rank} ({case_id})")
             conv.pending_ranks.discard(rank)
             if not conv.pending_ranks:
-                conv.state = sm.State.PREVIEW_SENT if conv.ready else sm.State.NEEDS_REVIEW
+                conv.state = sm.State.PREVIEW_SENT if sm.has_actionable(conv) else sm.State.NEEDS_REVIEW
             await update.message.reply_text(
                 f"{rank}️⃣ hit an internal error and produced nothing: {e}\n"
-                f"Reply the number again to retry, or pick a different case."
+                f"Reply {rank} again to retry."
             )
             return
         action = _apply_pipeline_result(conv, rank, hook, result)

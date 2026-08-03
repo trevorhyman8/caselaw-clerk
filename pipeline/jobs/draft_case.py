@@ -71,14 +71,31 @@ def _store_draft(case_id: str, draft: dict, gate_result, artifact_sha256: str) -
     return draft_id
 
 
-MAX_AUTO_REPAIRS = 2  # up to 3 total attempts (1 original + 2 repairs) before giving up
+def _max_auto_repairs() -> int:
+    from pipeline.settings import load_config
+
+    return load_config()["verification"]["auto_repair_attempts"]
+
+
+def _holding_direction_hard_fail(gate_result) -> bool:
+    """Per pipeline/verify_gate/gate.py's own documented design, a
+    holding_direction mismatch is the one failure category that NEVER
+    auto-repairs — "the worst possible error," full human review only, no
+    automated second-guessing of a wrong outcome. Checked separately from
+    _build_repair_instruction so the retry loop can skip repair entirely
+    rather than feeding it back to the same model that got it wrong."""
+    return any(
+        a["name"] == "holding_direction" and not a.get("passed")
+        for a in gate_result.provenance.get("fact_assertions", [])
+    )
 
 
 def _build_repair_instruction(gate_result, fact_sheet, case_meta: dict) -> str:
     """Turns a failed gate result into a SPECIFIC instruction for the next
     draft attempt — not "try again", but exactly what was wrong and what to
     do about it. This is what makes the retry loop actually converge
-    instead of repeating the same mistake."""
+    instead of repeating the same mistake. Never called for a
+    holding_direction failure — see _holding_direction_hard_fail."""
     lines = ["Your previous draft failed verification. Fix the SPECIFIC problems below — do not just rewrite generally:"]
 
     failed_quotes = [
@@ -95,10 +112,13 @@ def _build_repair_instruction(gate_result, fact_sheet, case_meta: dict) -> str:
     closing = gate_result.provenance.get("citations", {}).get("closing", [])
     for check in closing:
         if not check.get("passed"):
+            # check["expected"] is populated directly by citations.py — use
+            # it as-is rather than re-deriving from case_meta (whose key
+            # names don't match FieldCheck's field names for 3 of 4 fields,
+            # a real bug: this used to silently render "expected: None").
             lines.append(
                 f'- The closing citation\'s "{check["field"]}" field did not match the case record '
-                f'(expected: {case_meta.get(check["field"] if check["field"] != "party_names" else "case_name")!r}). '
-                f'Fix the closing citation to match exactly.'
+                f'(expected: {check.get("expected")!r}). Fix the closing citation to match exactly.'
             )
 
     other = gate_result.provenance.get("citations", {}).get("other", [])
@@ -112,12 +132,6 @@ def _build_repair_instruction(gate_result, fact_sheet, case_meta: dict) -> str:
     fact_fails = [
         a["name"] for a in gate_result.provenance.get("fact_assertions", []) if not a.get("passed")
     ]
-    if "holding_direction" in fact_fails:
-        lines.append(
-            f"- Your intro stated the wrong outcome. The court's actual holding direction is: "
-            f"'{fact_sheet.holding_direction}'. Rewrite the intro sentence to correctly state this "
-            f"— this is the most important fix; a wrong outcome is the worst possible error here."
-        )
     if "posture" in fact_fails:
         lines.append(f"- Your intro didn't clearly name the procedural posture: '{fact_sheet.posture}'. State it explicitly.")
     if "judge" in fact_fails:
@@ -144,17 +158,20 @@ def run_draft_pipeline(case_id: str, angle: str | None = None) -> dict:
     exemplars = retrieve(statutes=fact_sheet.statutes, court_id=case["court_id"], posture=fact_sheet.posture, limit=3)
     frozen_categories = _frozen_categories()
 
+    max_repairs = _max_auto_repairs()
     cl_client = CourtListenerClient() if settings.courtlistener_token else None
     try:
         draft, gate_result, attempts = None, None, 0
         current_angle = angle
-        for attempt in range(MAX_AUTO_REPAIRS + 1):
+        for attempt in range(max_repairs + 1):
             attempts = attempt + 1
             draft = draft_post(case_meta, opinion_text, fact_sheet, exemplars, frozen_categories, artifact["sha256"], current_angle)
             gate_result = run_gate(draft, case_meta, opinion_text, fact_sheet, artifact["sha256"], cl_client)
             if gate_result.verdict in ("pass", "warn"):
                 break
-            if attempt < MAX_AUTO_REPAIRS:
+            if _holding_direction_hard_fail(gate_result):
+                break  # never auto-repair a wrong outcome — straight to human review
+            if attempt < max_repairs:
                 repair = _build_repair_instruction(gate_result, fact_sheet, case_meta)
                 current_angle = f"{angle}\n\n{repair}" if angle else repair
     finally:
