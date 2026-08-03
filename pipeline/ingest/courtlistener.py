@@ -21,6 +21,7 @@ actual effect of running token-less.
 from __future__ import annotations
 
 import io
+import re
 import time
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
@@ -191,6 +192,37 @@ class CourtListenerClient:
         return r.json()
 
 
+def _strip_running_headers_footers(text: str) -> str:
+    """Legal-opinion PDFs repeat a running header/footer on every page
+    (e.g. "8 COFFEY V. FAST EASY OFFER, LLC"). pdfplumber extracts each
+    page's text including that header, which then lands MID-SENTENCE at
+    every page break in the joined text — breaking exact-match quote
+    verification on any quote that happens to span a page boundary. Found
+    via a real end-to-end test: a verbatim court quote failed layer-1
+    verification purely because of this artifact, not because anything was
+    actually wrong with the draft.
+
+    Heuristic: any line (after stripping leading page numbers) that repeats
+    3+ times across the document and is short (<100 chars) is almost
+    certainly a running header/footer, not body text — real body sentences
+    essentially never repeat verbatim 3+ times in a single opinion."""
+    lines = text.split("\n")
+    normalized_counts: dict[str, int] = {}
+    for line in lines:
+        stripped = re.sub(r"^\s*\d{1,4}\s*", "", line).strip()
+        if stripped and len(stripped) < 100:
+            normalized_counts[stripped] = normalized_counts.get(stripped, 0) + 1
+
+    repeated = {k for k, v in normalized_counts.items() if v >= 3}
+    kept = []
+    for line in lines:
+        stripped = re.sub(r"^\s*\d{1,4}\s*", "", line).strip()
+        if stripped in repeated:
+            continue
+        kept.append(line)
+    return "\n".join(kept)
+
+
 def fetch_opinion_text(download_url: str, timeout: int = 30) -> tuple[bytes, str]:
     """Fetch the court's own official PDF (bypasses CourtListener's auth
     wall on opinion-detail entirely) and extract text. Returns
@@ -208,6 +240,7 @@ def fetch_opinion_text(download_url: str, timeout: int = 30) -> tuple[bytes, str
     ):
         with pdfplumber.open(io.BytesIO(content)) as pdf:
             text = "\n".join(p.extract_text() or "" for p in pdf.pages)
+        text = _strip_running_headers_footers(text)
     else:
         text = r.text
     return content, text

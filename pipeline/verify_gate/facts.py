@@ -136,8 +136,18 @@ def assert_fact_consistency(draft_intro: str, fact_sheet: FactSheet, case_meta: 
     intro_norm = normalize(draft_intro).lower()
     out = []
 
+    # STYLE.md's own convention (confirmed by the LLM voice-distillation
+    # pass): district-court posts name the judge; appellate/SCOTUS/en banc
+    # posts name the INSTITUTION instead ("the Court of Appeals for the
+    # Ninth Circuit"), naming a specific judge only when quoting them by
+    # name. Enforcing a judge-surname requirement on appellate intros would
+    # penalize a draft for correctly following style — found via a real
+    # end-to-end test where a Ninth Circuit draft correctly said "the Court
+    # of Appeals for the Ninth Circuit" with the panel judge named only in a
+    # bridge sentence, not the intro.
+    DISTRICT_COURTS = {"cacd", "cand", "casd", "caed"}
     judge = (case_meta.get("judge") or "").strip()
-    if judge:
+    if judge and case_meta.get("court_id") in DISTRICT_COURTS:
         SUFFIXES = {"jr.", "jr", "sr.", "sr", "ii", "iii", "iv"}
         tokens = [t for t in judge.split() if t.strip(",").lower() not in SUFFIXES]
         surname = tokens[-1].lower() if tokens else judge.split()[-1].lower()

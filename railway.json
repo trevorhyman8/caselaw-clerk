@@ -1,0 +1,20 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
+  },
+  "services": {
+    "receiver": {
+      "startCommand": "uvicorn pipeline.receiver.app:app --host 0.0.0.0 --port $PORT",
+      "healthcheckPath": "/healthz",
+      "restartPolicyType": "ON_FAILURE"
+    },
+    "cron-runner": {
+      "startCommand": "python -m pipeline.jobs.run_due",
+      "cronSchedule": "*/30 * * * *",
+      "restartPolicyType": "NEVER"
+    }
+  },
+  "_comment": "Two services on one Dockerfile build (see Dockerfile header). Postgres is added as a Railway plugin, not defined here — SETUP.md Phase 6 walks through provisioning both services + the Postgres plugin + wiring DATABASE_URL. cron-runner's schedule matches config/config.yaml's digest timing (05:45 PT send time, computed inside run_due.py against config, not hardcoded here)."
+}

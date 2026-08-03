@@ -26,3 +26,27 @@ flagged so the gap is visible, not assumed covered):
 - **CA Legislature (leginfo) bill tracking**: per the plan, this is
   Scott-driven ("track this specific bill") rather than auto-discovered —
   not built as an automated sweep in v1.
+
+## PDF text-extraction fidelity at page boundaries (found via a real end-to-end test, 2026-08-02)
+
+Running a full case through the pipeline (Coffey v. Fast Easy Offer, LLC, a
+real, freshly-fetched 9th Cir. opinion) surfaced a genuine PDF-extraction
+issue: `pdfplumber` occasionally drops or garbles a few words exactly at a
+page break (a phrase like "Defendants are" vanished between two pages in
+one spot — not a hallucination, a lossy extraction). Running-header/footer
+lines (e.g. "8 COFFEY V. FAST EASY OFFER, LLC" repeated on every page) are
+now stripped (`courtlistener.py::_strip_running_headers_footers`, added
+during this same test), which fixed most page-boundary quote breaks, but
+does not fix outright word loss at a page seam.
+
+**This is not a gap in the safety design — it's the safety design working
+correctly under a real imperfection.** The layer-1 quote matcher correctly
+refused to verify a quote it couldn't find character-for-character, and the
+gate correctly routed the draft to NEEDS_REVIEW rather than silently
+publishing a slightly-corrupted quote. The fix for the underlying
+extraction fidelity (worth doing before heavy production use) is to try an
+alternative extraction path when pdfplumber's text has a suspiciously
+abrupt page-boundary sentence — e.g. `pypdfium2`'s raw text layer, or
+falling back to the fuzzy-match tier with a wider window specifically
+across page-break offsets. Not built yet; flagged rather than silently
+accepted.
