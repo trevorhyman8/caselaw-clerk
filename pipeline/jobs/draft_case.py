@@ -49,7 +49,6 @@ def _store_draft(case_id: str, draft: dict, gate_result, artifact_sha256: str) -
     body_rendered = draft.get("intro", "") + "\n\n" + "\n\n".join(
         b.get("text", "") for b in draft.get("blocks", [])
     ) + "\n\n" + (draft.get("closing_citation") or "")
-    content_hash = db.new_id()  # distinct from provenance hash; identifies THIS draft revision
     with db.get_conn() as conn:
         conn.execute(
             db.qmark(

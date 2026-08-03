@@ -3,7 +3,18 @@ unit-testable without a live bot token (which is a backloaded operator
 step). `telegram_bot.py` is a thin wrapper that feeds inbound text into
 `handle()` and executes whatever `Action` comes back.
 
-Transitions are only legal as drawn (plan §Telegram loop):
+Real workflow this is built for (clarified after live testing): Scott
+checks the digest on his phone in the car, picks one or a FEW cases, and
+has ~20 minutes before he's at his desk — plenty of time even at several
+minutes per draft, as long as picking more than one case doesn't serialize.
+So drafting is batch-capable: reply with one number, a few ("1, 3"), or
+"all", and every selected case drafts CONCURRENTLY (see
+telegram_bot.py::_run_batch_and_reply, which fans them out via a thread
+pool since run_draft_pipeline is a blocking call). Each report card is
+sent as soon as ITS draft is ready — Scott doesn't wait for the slowest one
+to see the fastest.
+
+Transitions:
   IDLE -> DIGEST_SENT -> DRAFTING -> PREVIEW_SENT -> CONFIRM_PUBLISH -> PUBLISHED
                               ^            |
                               |            v
@@ -11,13 +22,20 @@ Transitions are only legal as drawn (plan §Telegram loop):
   any gate failure x2 -> NEEDS_REVIEW (human, never auto-publishable)
   PREVIEW_SENT -> DISCARDED (reject/skip)
 
-PUBLISHED is reachable ONLY from CONFIRM_PUBLISH, which is reachable ONLY
-from a PREVIEW_SENT whose stored draft has gate_status == "pass" (or "warn"
-— never "needs_review"). The action executor re-checks the draft's content
-hash at execution time so a stale confirm after an edit can't slip through.
+With multiple drafts in flight, each is tracked by its digest RANK (the
+same 1️⃣2️⃣3️⃣ number Scott used to pick it) — `pending_ranks` while drafting,
+`ready[rank]` once a report card exists. DRAFTING -> PREVIEW_SENT fires once
+`pending_ranks` is empty (every selected case has resolved, ready OR
+needs_review) and at least one draft is ready to act on.
+
+PUBLISHED is reachable ONLY from CONFIRM_PUBLISH, which requires a specific
+ready rank with gate_status in (pass, warn) — never needs_review. The
+action executor re-checks that draft's content hash at execution time so a
+stale confirm after an edit can't slip through.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -40,11 +58,13 @@ class Conversation:
     telegram_user_id: str
     state: State = State.IDLE
     digest_items: list[dict] = field(default_factory=list)  # [{case_id, rank, hook}]
-    active_case_id: str | None = None
-    active_draft_id: str | None = None
-    active_draft_content_hash: str | None = None
+    pending_ranks: set[int] = field(default_factory=set)
+    ready: dict[int, dict] = field(default_factory=dict)  # rank -> {case_id, draft_id, content_hash, report_card, preview_url}
+    needs_review_ranks: dict[int, list[str]] = field(default_factory=dict)  # rank -> reasons
+    published_ranks: set[int] = field(default_factory=set)
+    confirm_rank: int | None = None
     confirm_publish_expires_at: datetime | None = None
-    edit_rounds: int = 0
+    edit_rounds: dict[int, int] = field(default_factory=dict)
     max_edit_rounds: int = 3
     confirm_timeout_minutes: int = 10
 
@@ -53,14 +73,19 @@ class Conversation:
 class Action:
     kind: str  # send_message | start_draft | start_revision | do_publish | noop
     text: str | None = None
-    case_id: str | None = None
+    case_ids: list[str] | None = None  # start_draft: one or more, drafted concurrently
+    ranks: list[int] | None = None      # parallel to case_ids, same order
     draft_id: str | None = None
+    content_hash: str | None = None    # do_publish: captured at pop-time, since conv.ready
+                                        # is mutated synchronously before the executor runs
     edit_instruction: str | None = None
 
 
 CANDIDATE_REF_MAP_HELP = (
-    "Reply a number to draft, 'all' for all, or 'skip'."
+    "Reply a number (or a few, like '1, 3') to draft, 'all' for all, or 'skip'."
 )
+
+_RANK_RE = re.compile(r"\d+")
 
 
 def send_digest(conv: Conversation, digest_items: list[dict]) -> Action:
@@ -77,69 +102,124 @@ def send_digest(conv: Conversation, digest_items: list[dict]) -> Action:
     return Action("send_message", text="\n".join(lines))
 
 
+def _parse_ranks(slot: str) -> list[int]:
+    return sorted({int(n) for n in _RANK_RE.findall(slot or "")})
+
+
+def _resolve_candidates(conv: Conversation, slot: str) -> list[dict]:
+    ranks = _parse_ranks(slot)
+    by_rank = {item["rank"]: item for item in conv.digest_items}
+    return [by_rank[r] for r in ranks if r in by_rank]
+
+
+def _start_batch(conv: Conversation, items: list[dict]) -> Action:
+    conv.pending_ranks = {item["rank"] for item in items}
+    conv.ready = {}
+    conv.needs_review_ranks = {}
+    conv.state = State.DRAFTING
+    if len(items) == 1:
+        text = f"On it — drafting {items[0]['hook']}. I'll message you when it's ready."
+    else:
+        hooks = "\n".join(f"  {i['rank']}️⃣ {i['hook']}" for i in items)
+        text = f"On it — drafting {len(items)} cases concurrently:\n{hooks}\nI'll send each as it's ready."
+    return Action(
+        "start_draft", text=text,
+        case_ids=[i["case_id"] for i in items], ranks=[i["rank"] for i in items],
+    )
+
+
 def handle(conv: Conversation, intent: str, slot: str | None, raw_text: str) -> Action:
     """Pure transition function. Returns the Action for the caller to
     execute; does NOT itself call the draft engine, gate, or WordPress —
     keeping this importable/testable with zero network or subprocess deps."""
 
     if intent == "status":
-        return Action("send_message", text=f"State: {conv.state.value}")
+        pending = f"pending: {sorted(conv.pending_ranks)}" if conv.pending_ranks else ""
+        readyd = f"ready: {sorted(conv.ready)}" if conv.ready else ""
+        return Action("send_message", text=f"State: {conv.state.value}. {pending} {readyd}".strip())
 
     if conv.state == State.DIGEST_SENT:
         if intent == "select_candidate" and slot:
-            item = _resolve_candidate(conv, slot)
-            if not item:
+            items = _resolve_candidates(conv, slot)
+            if not items:
                 return Action("send_message", text=f"Didn't recognize '{slot}' — {CANDIDATE_REF_MAP_HELP}")
-            conv.active_case_id = item["case_id"]
-            conv.state = State.DRAFTING
-            return Action("start_draft", case_id=item["case_id"], text=f"On it — drafting {item['hook']}. ~90 seconds.")
+            return _start_batch(conv, items)
         if intent == "draft_all":
-            conv.state = State.DRAFTING
-            return Action("start_draft", case_id="__all__", text="Drafting all candidates.")
+            if not conv.digest_items:
+                return Action("send_message", text="Nothing in today's digest to draft.")
+            return _start_batch(conv, conv.digest_items)
         if intent == "reject" or raw_text.strip().lower() == "skip":
             conv.state = State.IDLE
             return Action("send_message", text="OK — I'll include these in Saturday's recap if you want to revisit.")
         return Action("send_message", text=f"Not sure what you mean — {CANDIDATE_REF_MAP_HELP}")
 
-    if conv.state == State.PREVIEW_SENT:
+    if conv.state in (State.DRAFTING, State.PREVIEW_SENT):
+        # Even while some cases are still drafting, Scott can act on ones
+        # that are already ready (e.g. "publish 1" while 3 is still cooking).
         if intent == "approve_publish":
+            rank = _target_rank(conv, slot)
+            if rank is None:
+                return Action("send_message", text=_ambiguous_rank_message(conv, "publish"))
+            conv.confirm_rank = rank
             conv.state = State.CONFIRM_PUBLISH
-            conv.confirm_publish_expires_at = datetime.now(timezone.utc) + timedelta(
-                minutes=conv.confirm_timeout_minutes
-            )
+            title = conv.ready[rank].get("hook", f"case {rank}")
             return Action(
                 "send_message",
-                text="Publishing to consumerfinanceprivacycounsel.com. Reply YES to confirm.",
+                text=f"Publishing \"{title}\" to consumerfinanceprivacycounsel.com. Reply YES to confirm.",
             )
         if intent == "request_edit":
-            if conv.edit_rounds >= conv.max_edit_rounds:
+            rank = _target_rank(conv, slot)
+            if rank is None:
+                return Action("send_message", text=_ambiguous_rank_message(conv, "edit"))
+            if conv.edit_rounds.get(rank, 0) >= conv.max_edit_rounds:
                 return Action(
                     "send_message",
-                    text=f"That's {conv.max_edit_rounds} edit rounds already — let me know if you want to start fresh, or just publish/skip.",
+                    text=f"That's {conv.max_edit_rounds} edit rounds on that one already.",
                 )
-            conv.edit_rounds += 1
-            conv.state = State.REVISING
-            return Action("start_revision", draft_id=conv.active_draft_id, edit_instruction=raw_text)
+            conv.edit_rounds[rank] = conv.edit_rounds.get(rank, 0) + 1
+            conv.pending_ranks.add(rank)
+            item = conv.ready.pop(rank, None)
+            conv.state = State.DRAFTING if conv.pending_ranks else conv.state
+            return Action(
+                "start_revision", ranks=[rank],
+                draft_id=item["draft_id"] if item else None,
+                edit_instruction=raw_text,
+            )
         if intent == "reject":
-            conv.state = State.DISCARDED
-            return Action("send_message", text="Discarded — I'll include it in Saturday's recap for 14 days in case you change your mind.")
+            rank = _target_rank(conv, slot)
+            if rank is not None:
+                conv.ready.pop(rank, None)
+                return Action("send_message", text=f"Discarded {rank}️⃣.")
+        if conv.state == State.DRAFTING and not conv.ready:
+            return Action("send_message", text="Still working on it — I'll message you as each is ready.")
         return Action(
             "send_message",
-            text="Reply 'publish', tell me what to change, or 'skip'.",
+            text="Reply 'publish N', tell me what to change (e.g. 'edit 1: shorten the intro'), or 'skip'.",
         )
 
     if conv.state == State.CONFIRM_PUBLISH:
         if conv.confirm_publish_expires_at and datetime.now(timezone.utc) > conv.confirm_publish_expires_at:
             conv.state = State.PREVIEW_SENT
-            return Action("send_message", text="Confirmation timed out — reply 'publish' again if you still want to.")
-        if intent == "confirm_yes" and raw_text.strip().lower() == "yes":
-            conv.state = State.PUBLISHED
-            return Action("do_publish", draft_id=conv.active_draft_id)
+            conv.confirm_rank = None
+            return Action("send_message", text="Confirmation timed out — reply 'publish N' again if you still want to.")
+        if intent == "confirm_yes" and raw_text.strip().lower() == "yes" and conv.confirm_rank is not None:
+            rank = conv.confirm_rank
+            popped = conv.ready.pop(rank)
+            conv.published_ranks.add(rank)
+            conv.confirm_rank = None
+            # Publishing one rank doesn't finish the conversation if others
+            # are still pending or ready — only go fully PUBLISHED when
+            # this was the last thing left to act on.
+            if conv.pending_ranks or conv.ready:
+                conv.state = State.DRAFTING if conv.pending_ranks else State.PREVIEW_SENT
+            else:
+                conv.state = State.PUBLISHED
+            return Action(
+                "do_publish", draft_id=popped["draft_id"],
+                content_hash=popped["content_hash"], ranks=[rank],
+            )
         conv.state = State.PREVIEW_SENT
-        return Action("send_message", text="Not published — reply 'publish' again if you'd like to.")
-
-    if conv.state in (State.DRAFTING, State.REVISING):
-        return Action("send_message", text="Still working on it — I'll message you when it's ready.")
+        return Action("send_message", text="Not published — reply 'publish N' again if you'd like to.")
 
     if conv.state in (State.PUBLISHED, State.DISCARDED, State.NEEDS_REVIEW):
         return Action(
@@ -150,23 +230,41 @@ def handle(conv: Conversation, intent: str, slot: str | None, raw_text: str) -> 
     return Action("send_message", text="No digest is active right now. Check back at the next morning digest, or say 'recap' to see the past week.")
 
 
-def draft_ready(conv: Conversation, draft_id: str, content_hash: str, report_card: str, preview_url: str) -> Action:
-    conv.active_draft_id = draft_id
-    conv.active_draft_content_hash = content_hash
-    conv.state = State.PREVIEW_SENT
-    conv.edit_rounds = 0
-    text = f"{report_card}\n\nPreview: {preview_url}\nReply 'publish', or tell me what to change."
+def draft_ready(conv: Conversation, rank: int, draft_id: str, content_hash: str, report_card: str, preview_url: str, hook: str) -> Action:
+    conv.ready[rank] = {"draft_id": draft_id, "content_hash": content_hash, "hook": hook}
+    conv.pending_ranks.discard(rank)
+    conv.needs_review_ranks.pop(rank, None)
+    if not conv.pending_ranks:
+        conv.state = State.PREVIEW_SENT
+    how_to_publish = f"publish {rank}" if len(conv.digest_items) > 1 else "publish"
+    text = f"{report_card}\n\nPreview: {preview_url}\nReply '{how_to_publish}', or tell me what to change."
     return Action("send_message", text=text)
 
 
-def draft_needs_review(conv: Conversation, reasons: list[str]) -> Action:
-    conv.state = State.NEEDS_REVIEW
-    text = "This one didn't clear verification and needs a human look:\n" + "\n".join(f"- {r}" for r in reasons)
+def draft_needs_review(conv: Conversation, rank: int, reasons: list[str]) -> Action:
+    conv.pending_ranks.discard(rank)
+    conv.needs_review_ranks[rank] = reasons
+    if not conv.pending_ranks and not conv.ready:
+        conv.state = State.NEEDS_REVIEW
+    elif not conv.pending_ranks:
+        conv.state = State.PREVIEW_SENT
+    text = f"{rank}️⃣ didn't clear verification and needs a human look:\n" + "\n".join(f"- {r}" for r in reasons)
     return Action("send_message", text=text)
 
 
-def _resolve_candidate(conv: Conversation, slot: str) -> dict | None:
-    for item in conv.digest_items:
-        if str(item["rank"]) == str(slot).strip():
-            return item
+def _target_rank(conv: Conversation, slot: str | None) -> int | None:
+    if slot:
+        ranks = _parse_ranks(slot)
+        if len(ranks) == 1 and ranks[0] in conv.ready:
+            return ranks[0]
+        return None
+    if len(conv.ready) == 1:
+        return next(iter(conv.ready))
     return None
+
+
+def _ambiguous_rank_message(conv: Conversation, verb: str) -> str:
+    if not conv.ready:
+        return "Nothing's ready yet — I'll message you as soon as a draft clears."
+    options = ", ".join(str(r) for r in sorted(conv.ready))
+    return f"Which one? Reply '{verb} N' — ready: {options}"
