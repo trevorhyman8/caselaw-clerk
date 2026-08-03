@@ -178,8 +178,11 @@ def run_draft_pipeline(case_id: str, angle: str | None = None) -> dict:
         "reasons": gate_result.reasons,
         "report_card": report_card,
         "attempts": attempts,
+        # The FULL post text, not just the report card — sent directly in
+        # Telegram since no web preview host is deployed yet (see SETUP.md).
+        # A future real preview link can be layered on top of this later;
+        # it isn't a substitute for showing the actual content in-chat.
         "draft_text": _render_draft_text(draft),
-        "preview_url": f"https://preview.example/d/{draft_id}",  # real preview host TBD, see SETUP.md
     }
 
 

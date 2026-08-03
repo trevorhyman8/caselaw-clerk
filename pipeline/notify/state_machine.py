@@ -240,7 +240,7 @@ def handle(conv: Conversation, intent: str, slot: str | None, raw_text: str) -> 
 
 def draft_ready(
     conv: Conversation, rank: int, draft_id: str, content_hash: str,
-    report_card: str, preview_url: str, hook: str, gate_status: str = "pass",
+    report_card: str, draft_text: str, hook: str, gate_status: str = "pass",
 ) -> Action:
     conv.ready[rank] = {
         "draft_id": draft_id, "content_hash": content_hash, "hook": hook, "gate_status": gate_status,
@@ -249,13 +249,16 @@ def draft_ready(
     if not conv.pending_ranks:
         conv.state = State.PREVIEW_SENT
     how_to_publish = f"publish {rank}" if len(conv.digest_items) > 1 else "publish"
-    text = f"{report_card}\n\nPreview: {preview_url}\nReply '{how_to_publish}', or tell me what to change."
+    text = (
+        f"{report_card}\n\n--- draft ---\n{draft_text}\n\n"
+        f"Reply '{how_to_publish}', or tell me what to change."
+    )
     return Action("send_message", text=text)
 
 
 def draft_needs_review(
     conv: Conversation, rank: int, draft_id: str, content_hash: str, reasons: list[str],
-    report_card: str | None = None, draft_text: str | None = None, preview_url: str | None = None,
+    report_card: str | None = None, draft_text: str | None = None,
 ) -> Action:
     """Still delivers the draft — a failed gate means "don't auto-publish
     this," not "show Scott nothing." Stored in `ready` alongside clean
@@ -278,8 +281,6 @@ def draft_needs_review(
         parts.append(report_card)
     if draft_text:
         parts.append(f"--- draft text ---\n{draft_text}")
-    if preview_url:
-        parts.append(f"Preview: {preview_url}")
     parts.append(f"Not publishable as-is (reply 'edit {rank}: ...' to try a fix, or handle it manually).")
     return Action("send_message", text="\n\n".join(parts))
 

@@ -150,11 +150,11 @@ def _apply_pipeline_result(conv: sm.Conversation, rank: int, hook: str, result: 
     if result["gate_verdict"] in ("pass", "warn"):
         return sm.draft_ready(
             conv, rank, result["draft_id"], result["content_hash"],
-            result["report_card"], result["preview_url"], hook, result["gate_verdict"],
+            result["report_card"], result["draft_text"], hook, result["gate_verdict"],
         )
     return sm.draft_needs_review(
         conv, rank, result["draft_id"], result["content_hash"], result["reasons"],
-        report_card=result["report_card"], draft_text=result["draft_text"], preview_url=result["preview_url"],
+        report_card=result["report_card"], draft_text=result["draft_text"],
     )
 
 
