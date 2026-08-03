@@ -1,0 +1,33 @@
+# Deterministic candidate scoring — weights derived from the historical
+# corpus category frequencies (see corpus/style_stats.json after Phase 0
+# runs). score = court_mult * (primary_topic_pts + 0.5 * sum(secondary)) + bonuses
+
+topic_pts:
+  fdcpa: 10        # 911 historical posts
+  tcpa: 10         # 846
+  fcra: 8          # 366
+  class: 7         # 438
+  privacy: 7       # 198+
+  arbitration: 6   # 167
+  regulatory: 6    # 287
+  ucl: 5           # 110+62
+
+court_mult:
+  scotus: 1.2
+  ca9: 1.1
+  cacd: 1.0
+  cand: 1.0
+  casd: 1.0
+  caed: 1.0
+  cal: 1.0
+  calctapp: 0.85
+  default: 0.3
+
+bonuses:
+  posture_keyword_hit: 3
+  historical_judge_hit: 2
+  substantial_opinion_length: 1   # >= 2000 chars
+
+hard_reject_min_chars: 800
+digest_score_floor: 6
+digest_max_items: 8

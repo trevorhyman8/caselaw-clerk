@@ -1,0 +1,248 @@
+{
+  "n_total": 20,
+  "n_found_opinions": 1,
+  "n_found_recap": 3,
+  "n_found_either": 4,
+  "coverage_pct": 20.0,
+  "tier": "MANUAL_FORWARD_PRIMARY (<40%)",
+  "note": "Run WITHOUT a CourtListener token/FLP membership — this is the conservative floor. Coverage with a token (esp. RECAP search alerts, member-only) will be higher; re-run once COURTLISTENER_TOKEN is set to get the number that actually governs the go-live decision.",
+  "results": [
+    {
+      "date": "2008-05-21 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/northern-district-strikes-down-fccs-ruling-that-giving-cell-phone-number-in-loan-documents-constitutes-express-consent-under-tcpa/",
+      "intro": "In *Leckler v. CashCall, Inc,* Judge Susan Illston of the United States District Court for the Northern District refused to follow the FCC's January 4, 2008 interpretive ruling of the Telephone Consumer Protection Act, which had permitted lenders to use autodialers and prerecorded message calls to wireless numbers so long as express consent had been given, such as if the consumer provided their cell phone number to the lender as part of a credit application.",
+      "court_id": "fcc",
+      "closing_citation": null,
+      "case_name": "Leckler v. CashCall",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2010-04-13 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-finds-improper-recording-of-collection-calls-properly-pleaded/",
+      "intro": "In *Membrila v. Receivables Performance Management, LLC* 2010 WL 1407274 (S.D.Cal.), Judge Gonzalez found that a consumer properly pleaded a claim against a debt collector for the manner of recording the collection calls, explaining:",
+      "court_id": "casd",
+      "closing_citation": null,
+      "case_name": "Membrila v. Receivables Performance Management",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2011-06-22 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-ill-orders-discovery-on-consent-defense-under-tcpa/",
+      "intro": "In Martin v. Bureau of Collection Recovery,  2011 WL 2311869 (N.D.Ill. 2011), Judge St. Eve ordered discovery against a debt collector on it's 'consent' defense under the TCPA, rejected the argument that evidence of consent was in the possession of the debt-collector's clients or other third parties.  Judge St. Eve explained:",
+      "court_id": "fcc",
+      "closing_citation": null,
+      "case_name": "Martin v. Bureau of Collection Recovery",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2012-03-30 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/court-of-appeal-affirms-rosenthal-act-class-cert-denial-because-class-definition-included-non-delinquent-accounts-to-which-the-rosenthal-act-did-not-apply/",
+      "intro": "In *Williams v. Emergency Groups' Office*, 2012 WL 1032700 (2012), the Court of Appeal affirmed, in an unpublished decision, the trial court's denial of class certification under the Rosenthal Act for alleged infirmities in the collection of medical bills. The Court of Appeal found, in part, that the Plaintiffs' class definition was too broad because it necessarily would have included non-delinquent accounts, that are not subject to the Rosenthal Act.",
+      "court_id": "cal",
+      "closing_citation": null,
+      "case_name": "Williams v. Emergency Groups' Office",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2012-11-05 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-resolves-whether-creditor-is-subject-to-fdcpa-on-motion-to-dismiss/",
+      "intro": "In *McQueen v. American Exp. Centurion Bank*, 2012 WL 5301075 (N.D.Cal. 2012), Judge James dismissed a Plaintiff's FDCPA claim on a Rule 12(b)(6) motion because the defendant was a creditor, exempt from the FDCPA.",
+      "court_id": "cand",
+      "closing_citation": null,
+      "case_name": "McQueen v. American Exp. Centurion Bank",
+      "found_opinions": false,
+      "found_recap": true,
+      "match_detail": {
+        "source": "recap",
+        "matched_name": "McQueen v. American Express Centurion Bank",
+        "docket_id": 5941820
+      }
+    },
+    {
+      "date": "2013-03-12 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-wash-finds-re-investigating-furnisher-can-not-rely-solely-on-what-it-learns-from-cra-when-other-information-is-available/",
+      "intro": "In *McDonald v. OneWest Bank, FSB,* 2013 WL 858197 (W.D.Wash. 2013), Judge Lasnik found a triable issue of fact as to a furnisher's reinvestigation under FCRA, finding that the furnisher can not rely solely on the information provided to it by the CRA when the furnisher has other information available to it to investigate.",
+      "court_id": "ca9",
+      "closing_citation": null,
+      "case_name": "McDonald v. OneWest Bank",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2013-10-07 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-says-negligence-but-not-willful-fcra-claim-could-be-stated-in-ssn-swap-situation/",
+      "intro": "In *Callahan v. Equifax Information Services LLC,* 2013 WL 5503949 (N.D.Cal. 2013), Judge Alsup found that Plaintiff could state a FCRA claim in an SSN-swap situation.",
+      "court_id": "cand",
+      "closing_citation": null,
+      "case_name": "Callahan v. Equifax Information Services LLC",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2014-05-29 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-n-y-stays-tcpa-case-based-on-primary-jurisdiction-doctrine/",
+      "intro": "In Passero v. Diversified Consultants, 2014 WL 2257185 (W.D. N.Y. 2014), here, Judge Curtin stayed a TCPA case against a Debt Collector who placed multiple calls to plaintiffs' cellular telephone service in an effort to collect on a debt incurred by a non-party.",
+      "court_id": "caed",
+      "closing_citation": null,
+      "case_name": "Passero v. Diversified Consultants",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2014-10-28 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-says-fcc-exceeded-jurisdiction-defining-atds-tcpa-grants-msj-defendant-basis-dialer-atds/",
+      "intro": "In *Marks v. Crunch San Diego, LLC,* --- F.Supp.3d ----, 2014 WL 5422976 (S.D.Cal. 2014), Judge Bashant found that defendants' text message system was not an ATDS within the meaning of the TCPA.",
+      "court_id": "casd",
+      "closing_citation": null,
+      "case_name": "Marks v. Crunch San Diego",
+      "found_opinions": true,
+      "found_recap": false,
+      "match_detail": {
+        "source": "opinions",
+        "matched_name": "Marks v. Crunch San Diego, LLC",
+        "cluster_id": 7309515
+      }
+    },
+    {
+      "date": "2015-06-04 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-says-furnishers-fcra-re-investigation-was-reasonable-based-on-what-cra-told-it/",
+      "intro": "In *Gustafson v. Experian Info. Solutions Inc.,* No. 2:14-CV-01453-ODW EX, 2015 WL 3477071, at *6 (C.D. Cal. June 2, 2015), Judge Wright granted summary judgment to a debt collector on a Plaintiff's FCRA claim, alleging that the debt was \"double-reported\".",
+      "court_id": "cacd",
+      "closing_citation": null,
+      "case_name": "Gustafson v. Experian Info. Solutions Inc.",
+      "found_opinions": false,
+      "found_recap": true,
+      "match_detail": {
+        "source": "recap",
+        "matched_name": "Raina Gustafson v. Experian Information Solutions Inc.",
+        "docket_id": 4151112
+      }
+    },
+    {
+      "date": "2015-12-02 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-ny-says-experian-neither-directly-nor-vicariously-liable-under-tcpa-for-unsolicited-texts/",
+      "intro": "In *Melito v. American Eagle Outfitters, Inc.,* 2015 WL 7736547, at *4-5 (S.D.N.Y., 2015), Judge Caproni dismissed a TCPA class action against Experian for unsolicited texts sent by American Eagle in connection with a marketing campaign. First, the Court found no direct liability under the TCPA.",
+      "court_id": "cacd",
+      "closing_citation": null,
+      "case_name": "Melito v. American Eagle Outfitters",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2016-06-07 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-kan-denies-stay-tcpa-case-pending-outcome-aca-proceedings-dc-circuit/",
+      "intro": "In *Jones v. AD Astra Recovery Services, Inc.* 2016 WL 3145072, at *6 (D.Kan., 2016), Magistrate Judge Birzer denied a stay of a TCPA case pending outcome of the DC Circuit proceedings. In *Lee* , and to maintain consistency in its rulings, here the Court finds, in conjunction with the existence of the full legal authority of the 2015 FCC Ruling, solely defending a suit, without setting forth additional prejudice, \"does not constitute a 'clear case of hardship or inequity' within the meaning of *Landis* .\" Despite the D.",
+      "court_id": "fcc",
+      "closing_citation": null,
+      "case_name": "Jones v. AD Astra Recovery Services",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2016-12-19 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/court-appeal-cal-says-unpublished-decision-asfa-requires-noi-mailed-not-received-within-15-days-sale-last-known-address-address-file-not-vehicle-repos/",
+      "intro": "In *Baseline Financial Services, Inc. v. Hobbs,* 2016 WL 7243531, at *4--6 (Cal.App.",
+      "court_id": "calctapp",
+      "closing_citation": null,
+      "case_name": "Baseline Financial Services, Inc. v. Hobbs",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2017-09-05 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-finds-no-misconduct-by-lessor-for-not-early-terminating-lease-on-vehicle-traded-in-2-days-before-lease-maturation/",
+      "intro": "In *Chaiwong v. Hanlees Fremont, Inc.,* 2017 WL 3838106 (N.D. Cal. Sept. 1, 2017), Judge Gilliam dismissed a Rosenthal Act/UCL claim filed against an automobile lender by a consumer and the dealer to whom the customer traded in their vehicle.",
+      "court_id": "cand",
+      "closing_citation": null,
+      "case_name": "Chaiwong v. Hanlees Fremont",
+      "found_opinions": false,
+      "found_recap": true,
+      "match_detail": {
+        "source": "recap",
+        "matched_name": "Chaiwong v. Hanlees Fremont, Inc.",
+        "docket_id": 4495616
+      }
+    },
+    {
+      "date": "2018-03-13 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-allows-call-recording-class-action-to-proceed/",
+      "intro": "In *Fishman v. Tiger Natural Gas, Inc.,* 2018 WL 1242076, at *2--3 (N.D.Cal., 2018), Judge Alsup allowed a call-recording class action to proceed. Tiger argues that plaintiffs' allegations regarding the sales calls --- namely that (1) the parties discussed plaintiffs' PG&E account information, (2) the calls were not made in a public setting, and (3) many other telemarketers disclose that calls are recorded --- are insufficient to allege an objectively reasonable expectation of confidentiality.",
+      "court_id": "cand",
+      "closing_citation": null,
+      "case_name": "Fishman v. Tiger Natural Gas",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2018-10-26 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-says-tcpa-plaintiff-adequately-pleaded-atds-post-marks/",
+      "intro": "In Keifer v. Hosopo Corp., No.: 3:18-cv-1353-CAB-(KSC), 2018 WL 5295011 (S.D. Cal. Oct. 25, 2018), the Court found that a TCPA Plaintiff adequately pleaded an ATDS after Marks.",
+      "court_id": "casd",
+      "closing_citation": null,
+      "case_name": "Keifer v. Hosopo Corp.",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2019-08-08 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-certifies-tcpa-class/",
+      "intro": "In Moser v. Health Ins. Innovations, Inc., No. 17-cv-1127-WQH-KSC, 2019 U.S. Dist. LEXIS 132790 (S.D. Cal. Aug. 2, 2019), Judge Hayes certified a TCPA class.",
+      "court_id": "casd",
+      "closing_citation": null,
+      "case_name": "Moser v. Health Ins. Innovations",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2020-06-18 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-ill-permits-counter-claim-on-the-debt-against-fdcpa-tcpa-plaintiff/",
+      "intro": "In Walker v. Westlake Fin. Servs., No. 19 C 6921, 2020 U.S. Dist. LEXIS 105794 (N.D. Ill. June 17, 2020), Judge Kendall permitted an FDCPA/TCPA defendant to file a counter-claim on the debt back against the Plaintiff.",
+      "court_id": "cacd",
+      "closing_citation": null,
+      "case_name": "Walker v. Westlake Fin. Servs.",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2021-05-16 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-cal-says-unanswered-calls-do-not-violated-the-fdcpa/",
+      "intro": "In Pearson v. April Healthcare Grp., 2021 U.S.Dist.LEXIS 90010 (S.D.Cal. 2021), Judge Hayes granted summary judgment to a debt collector attempting to collect a medical debt despite the availability of medical insurance.",
+      "court_id": "casd",
+      "closing_citation": null,
+      "case_name": "Pearson v. April Healthcare Grp.",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    },
+    {
+      "date": "2022-09-08 00:00:00",
+      "url": "https://www.severson.com/consumer-finance/district-court-wash-says-tcpa-plaintiff-who-was-alleged-to-have-been-involved-in-manufacturing-tcpa-claims-still-has-art-iii-standing/",
+      "intro": "In Barton v. Serve All Help All Inc., No. 3:21-cv-5338 RJB, 2022 U.S. Dist. LEXIS 161487, at *8 (W.D. Wash. Sep. 7, 2022), Judge Bryan denied summary judgment all around, but also denied a TCPA defendant's jurisdictional motion.",
+      "court_id": "ca9",
+      "closing_citation": null,
+      "case_name": "Barton v. Serve All Help All Inc.",
+      "found_opinions": false,
+      "found_recap": false,
+      "match_detail": null
+    }
+  ],
+  "analysis_note": "3/20 samples had court_id=\"fcc\" (a load_corpus.py court-detection false positive — those posts mention FCC somewhere but are not FCC proceedings; \"fcc\" is not a valid CourtListener court code, so those 3 were guaranteed misses). Excluding them: 4/17 = 23.5% on real court queries. Separately, a live sweep of TODAY's published opinions (non-backtest, see pipeline/ingest/sweep.py test run) found 4/4 recent 9th Cir. TCPA opinions with full text, unauthenticated. The gap is specific to RECAP/unpublished DISTRICT COURT orders (exactly what 74% of Scott's historical WL-cited posts are) as unauthenticated RECAP search is much weaker than the CourtListener opinion search. This backtest is also a pessimistic proxy: it is asking whether we can find OLD (2008-2022) cases years later, not whether we can catch NEW cases the day they are decided (which RECAP webhook alerts are built for, and which a token substantially improves). Re-run with COURTLISTENER_TOKEN set once Scott/Trevor create an account to get the number that actually governs go-live — this run is the conservative unauthenticated floor."
+}

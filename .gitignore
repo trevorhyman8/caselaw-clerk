@@ -1,0 +1,26 @@
+# Private bundle — NEVER committed to the public repo. Ships separately
+# (AirDrop/encrypted transfer) per SETUP.md Phase 0.
+.private/
+STYLE.md
+corpus/*.sqlite*
+corpus/*.xlsx
+corpus/*.json
+*.xlsx
+
+# Local dev DB / secrets
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# OS
+.DS_Store

@@ -1,0 +1,43 @@
+# All of Scott's choices live here. Nothing sensitive — secrets are env vars
+# (Railway variables in deployment, .env locally, never committed).
+
+site:
+  domain: consumerfinanceprivacycounsel.com
+  timezone: America/Los_Angeles
+
+digest:
+  send_time_local: "05:45"
+  max_candidates: 8
+  min_score: 6
+  silent_on_no_cases: true
+  weekly_recap: true
+  weekly_recap_day: saturday
+  weekly_recap_time_local: "08:00"
+  recap_expiry_days: 14
+
+drafting:
+  auto_predraft_top_n: 3          # overnight Batch pre-draft; 0 disables
+  llm_rerank: false
+  max_edit_rounds: 3
+  max_bridge_sentences: 2
+
+verification:
+  fuzzy_quote_ratio_min: 0.98
+  auto_repair_attempts: 1
+  min_quote_share_warn: 0.5
+
+publishing:
+  mode: draft_only                # draft_only | live  (flip only after Scott's approval)
+  require_typed_confirm: true
+  confirm_timeout_minutes: 10
+
+sources:
+  federal_core: true
+  california_appellate: true
+  cfpb_fcc: true
+  ca_legislature: true
+
+coverage_backtest:
+  sample_size: 30
+  ship_threshold_pct: 70
+  fallback_threshold_pct: 40

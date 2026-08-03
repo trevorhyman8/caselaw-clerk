@@ -1,0 +1,128 @@
+# Single source of truth for keyword families — used by both CourtListener
+# alert/search queries AND the deterministic scorer (config/scoring.yaml
+# topic_pts keys match these keys exactly).
+
+courts:
+  federal_district: [cacd, cand, casd, caed]
+  federal_appellate: [ca9]
+  federal_supreme: [scotus]
+  california: [cal, calctapp]
+
+families:
+  fdcpa:
+    label: "FDCPA / Rosenthal Act"
+    terms:
+      - '"Fair Debt Collection"'
+      - "FDCPA"
+      - '"1692"'
+      - "Rosenthal"
+      - '"1788.17"'
+  tcpa:
+    label: "TCPA"
+    terms:
+      - '"Telephone Consumer Protection"'
+      - "TCPA"
+      - '"47 U.S.C. § 227"'
+      - '"227(b)"'
+      - "ATDS"
+      - '"prerecorded voice"'
+  fcra:
+    label: "FCRA / CCRAA"
+    terms:
+      - '"Fair Credit Reporting"'
+      - "FCRA"
+      - '"1681"'
+      - "CCRAA"
+      - '"1785.25"'
+  privacy:
+    label: "Privacy / CIPA / CCPA"
+    terms:
+      - "CIPA"
+      - '"Penal Code § 632"'
+      - '"632.7"'
+      - '"638.51"'
+      - '"pen register"'
+      - '"trap and trace"'
+      - "CCPA"
+      - '"1798.100"'
+      - '"1798.150"'
+      - "wiretap"
+  arbitration:
+    label: "Arbitration"
+    terms:
+      - '"compel arbitration"'
+      - '"Federal Arbitration Act"'
+      - '"arbitration agreement"'
+      - '"delegation clause"'
+      - '"mass arbitration"'
+  class:
+    label: "Class Actions"
+    terms:
+      - '"class certification"'
+      - '"Rule 23"'
+      - '"23(b)(3)"'
+      - "ascertainability"
+      - "CAFA"
+  ucl:
+    label: "UCL / CLRA"
+    terms:
+      - '"17200"'
+      - '"unfair competition law"'
+      - '"17500"'
+      - "CLRA"
+      - '"1770"'
+  regulatory:
+    label: "Regulatory (CFPB/FCC)"
+    terms:
+      - "CFPB"
+      - "FCC"
+
+posture_keywords:
+  - "motion to dismiss"
+  - "summary judgment"
+  - "class certification"
+  - "compel arbitration"
+  - "motion to strike"
+  - "motion for reconsideration"
+  - "demurrer"
+
+courtlistener_alerts:
+  - name: recap-district-consumer
+    type: r
+    courts: [cacd, cand, casd, caed]
+    families: [fdcpa, tcpa, fcra]
+    extra_filter: 'description:(order OR opinion OR "memorandum decision")'
+    delivery: webhook
+    requires_membership: true
+  - name: recap-district-privacy-ucl-arb
+    type: r
+    courts: [cacd, cand, casd, caed]
+    families: [privacy, ucl, arbitration, class]
+    extra_filter: 'description:(order OR opinion)'
+    delivery: webhook
+    requires_membership: true
+  - name: opinions-district-backstop
+    type: o
+    courts: [cacd, cand, casd, caed]
+    families: [fdcpa, tcpa, fcra, privacy, arbitration, class, ucl]
+    delivery: webhook
+    requires_membership: false
+  - name: opinions-appellate
+    type: o
+    courts: [ca9, scotus]
+    families: [fdcpa, tcpa, fcra, privacy, arbitration, class, ucl]
+    delivery: webhook
+    requires_membership: false
+  - name: opinions-california
+    type: o
+    courts: [cal, calctapp]
+    families: [fdcpa, tcpa, fcra, privacy, arbitration, class, ucl]
+    delivery: webhook
+    requires_membership: false
+
+secondary_sources:
+  calcourts_slip_opinions: "https://www.courts.ca.gov/opinions-slip.htm"
+  ca9_rss: "https://cdn.ca9.uscourts.gov/datastore/opinions/rss.xml"
+  cfpb_newsroom_rss: "https://www.consumerfinance.gov/about-us/newsroom/feed/"
+  fcc_daily_digest_rss: "https://www.fcc.gov/news-events/headlines/rss"
+  govinfo_uscourts_api: "https://api.govinfo.gov/collections/USCOURTS"
