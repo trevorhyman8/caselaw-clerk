@@ -1,0 +1,126 @@
+<title>Concept 1 — Law Review</title>
+<style>
+:root {
+  --ground: #faf9f6;
+  --ground-raised: #ffffff;
+  --ink: #1c1e2a;
+  --ink-soft: #4a4d5c;
+  --rule: #dcd9d0;
+  --accent: #6b2632;
+  --accent-soft: #f4e9e9;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #17171c; --ground-raised: #1e1f26; --ink: #ece9e2; --ink-soft: #a8a6a0; --rule: #35343c; --accent: #d68e97; --accent-soft: #2b1e21; }
+}
+:root[data-theme="dark"] { --ground: #17171c; --ground-raised: #1e1f26; --ink: #ece9e2; --ink-soft: #a8a6a0; --rule: #35343c; --accent: #d68e97; --accent-soft: #2b1e21; }
+:root[data-theme="light"] { --ground: #faf9f6; --ground-raised: #ffffff; --ink: #1c1e2a; --ink-soft: #4a4d5c; --rule: #dcd9d0; --accent: #6b2632; --accent-soft: #f4e9e9; }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: Georgia, "Iowan Old Style", ui-serif, serif;
+  line-height: 1.6;
+}
+.masthead {
+  border-bottom: 3px double var(--rule);
+  padding: 2.5rem 2rem 1.5rem;
+  text-align: center;
+}
+.masthead .kicker {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent); margin: 0 0 0.75rem;
+}
+.masthead h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem); margin: 0; font-weight: 400;
+  letter-spacing: -0.01em; text-wrap: balance;
+}
+.masthead .tagline {
+  font-style: italic; color: var(--ink-soft); margin: 0.75rem auto 0;
+  max-width: 38em; font-size: 1.05rem;
+}
+nav {
+  display: flex; justify-content: center; gap: 2.2rem;
+  padding: 0.9rem 0; border-bottom: 1px solid var(--rule);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+}
+nav a { color: var(--ink-soft); text-decoration: none; }
+nav a:hover, nav a:focus-visible { color: var(--accent); }
+main { max-width: 46rem; margin: 0 auto; padding: 3rem 2rem 5rem; }
+.lede {
+  font-size: 1.05rem;
+}
+.lede::first-letter {
+  float: left; font-size: 4.6rem; line-height: 0.82; padding: 0.05em 0.1em 0 0;
+  font-weight: 400; color: var(--accent);
+}
+.section-label {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.8rem;
+}
+.section-label::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.post {
+  padding: 1.4rem 0; border-bottom: 1px solid var(--rule);
+}
+.post:first-of-type { padding-top: 0; }
+.post .meta {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.72rem; color: var(--ink-soft); letter-spacing: 0.03em;
+  display: flex; gap: 0.9rem; margin-bottom: 0.4rem;
+}
+.post .meta .cat { color: var(--accent); }
+.post h2 {
+  font-size: 1.28rem; font-weight: 400; margin: 0; text-wrap: balance;
+  line-height: 1.35;
+}
+.post h2 a { color: var(--ink); text-decoration: none; background-image: linear-gradient(var(--accent), var(--accent)); background-size: 0% 1px; background-repeat: no-repeat; background-position: 0 100%; transition: background-size .25s; }
+.post h2 a:hover, .post h2 a:focus-visible { background-size: 100% 1px; }
+footer {
+  text-align: center; padding: 2.5rem 2rem 3rem; color: var(--ink-soft);
+  font-size: 0.8rem; border-top: 3px double var(--rule);
+}
+footer .firm { font-family: ui-monospace, monospace; letter-spacing: 0.05em; }
+</style>
+
+<header class="masthead">
+  <p class="kicker">Est. Womble Bond Dickinson</p>
+  <h1>Consumer Finance + Privacy Counsel</h1>
+  <p class="tagline">Navigating the rapidly developing landscape of consumer finance and privacy law — one case at a time.</p>
+</header>
+<nav>
+  <a href="#">Home</a><a href="#">Blog</a><a href="#">About</a><a href="#">Subscribe</a>
+</nav>
+
+<main>
+  <p class="lede">Welcome to Consumer Finance + Privacy Counsel, the firm's running docket of the decisions, rules, and filings reshaping how businesses collect data and collect debts — read by the litigators who cite it.</p>
+
+  <p class="section-label">Latest</p>
+
+  <article class="post">
+    <div class="meta"><span class="cat">9th Cir. · TCPA</span><span>Aug 2, 2026</span><span>S. Hyman</span></div>
+    <h2><a href="#">9th Cir. Reverses Dismissal of TCPA Suit Over Real Estate Solicitation Messages</a></h2>
+  </article>
+  <article class="post">
+    <div class="meta"><span class="cat">N.D. Cal. · Privacy</span><span>Mar 28, 2026</span><span>G. Walser-Jolly</span></div>
+    <h2><a href="#">Federal Court Largely Denies Motion to Dismiss in Cookie Banner Malfunction Privacy Class Action</a></h2>
+  </article>
+  <article class="post">
+    <div class="meta"><span class="cat">CIPA</span><span>Mar 28, 2026</span><span>G. Walser-Jolly</span></div>
+    <h2><a href="#">Federal Court Dismisses CIPA § 638.51 Privacy Claim Targeting Website Use of TikTok Tracking Software</a></h2>
+  </article>
+  <article class="post">
+    <div class="meta"><span class="cat">Legislation</span><span>Mar 24, 2026</span><span>G. Walser-Jolly</span></div>
+    <h2><a href="#">Washington HB 2274 Reduces Statutory Damages Under CEMA</a></h2>
+  </article>
+  <article class="post">
+    <div class="meta"><span class="cat">UCC · Bank Fraud</span><span>Mar 22, 2026</span><span>G. Walser-Jolly</span></div>
+    <h2><a href="#">Court Allows Fraud and UCC Refund Claims to Proceed Against Bank in Fraudulent Wire Transfer Case</a></h2>
+  </article>
+</main>
+
+<footer>
+  <p class="firm">A Womble Bond Dickinson (US) Blog</p>
+  <p>Privacy Policy — Home — Blog — About — Subscribe</p>
+</footer>

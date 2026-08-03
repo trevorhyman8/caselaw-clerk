@@ -1,0 +1,125 @@
+<title>Concept 3 — Counsel Warm</title>
+<style>
+:root {
+  --ground: #f6f2ec;
+  --panel: #fffdf9;
+  --ink: #2b2a26;
+  --ink-soft: #736e63;
+  --rule: #e7ddcd;
+  --accent: #2f6b64;
+  --accent-2: #d98c4a;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #1c1b18; --panel: #242220; --ink: #efece4; --ink-soft: #a39c8e; --rule: #3a372f; --accent: #6fb3a8; --accent-2: #e3a468; }
+}
+:root[data-theme="dark"] { --ground: #1c1b18; --panel: #242220; --ink: #efece4; --ink-soft: #a39c8e; --rule: #3a372f; --accent: #6fb3a8; --accent-2: #e3a468; }
+:root[data-theme="light"] { --ground: #f6f2ec; --panel: #fffdf9; --ink: #2b2a26; --ink-soft: #736e63; --rule: #e7ddcd; --accent: #2f6b64; --accent-2: #d98c4a; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: "Avenir Next", -apple-system, "Segoe UI", system-ui, sans-serif; }
+
+header { padding: 1.1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+header .brand { font-weight: 700; letter-spacing: -0.01em; }
+header nav { display: flex; gap: 1.8rem; font-size: 0.92rem; }
+header nav a { color: var(--ink-soft); text-decoration: none; }
+header nav a:hover, header nav a:focus-visible { color: var(--accent); }
+
+.hero {
+  max-width: 52rem; margin: 2.5rem auto 1rem; padding: 0 2rem; text-align: center;
+}
+.hero .badge {
+  display: inline-block; background: color-mix(in srgb, var(--accent-2) 18%, var(--panel));
+  color: var(--accent-2); font-size: 0.78rem; font-weight: 600; padding: 0.3rem 0.85rem;
+  border-radius: 100px; margin-bottom: 1.1rem;
+}
+.hero h1 {
+  font-size: clamp(2.1rem, 5.5vw, 3rem); line-height: 1.12; margin: 0 0 1rem;
+  font-weight: 800; letter-spacing: -0.02em; text-wrap: balance;
+}
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { color: var(--ink-soft); font-size: 1.08rem; max-width: 36em; margin: 0 auto; }
+.hero .cta { margin-top: 1.6rem; display: flex; gap: 0.7rem; justify-content: center; }
+.hero .cta input {
+  border: 1px solid var(--rule); background: var(--panel); border-radius: 100px;
+  padding: 0.7rem 1.1rem; font-size: 0.92rem; width: 15rem; color: var(--ink);
+}
+.hero .cta button {
+  border: none; background: var(--accent); color: #fff; border-radius: 100px;
+  padding: 0.7rem 1.4rem; font-size: 0.92rem; font-weight: 600; cursor: pointer;
+}
+.hero .cta button:hover, .hero .cta button:focus-visible { background: color-mix(in srgb, var(--accent) 85%, black); }
+
+.section-title {
+  max-width: 60rem; margin: 3.4rem auto 1.2rem; padding: 0 2rem;
+  font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em;
+}
+.posts {
+  max-width: 60rem; margin: 0 auto; padding: 0 2rem 4rem;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.3rem;
+}
+.post {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 18px;
+  padding: 1.5rem; display: flex; flex-direction: column; gap: 0.9rem;
+}
+.post .tag { color: var(--accent); font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.post h2 { font-size: 1.08rem; line-height: 1.4; margin: 0; font-weight: 700; }
+.post h2 a { color: var(--ink); text-decoration: none; }
+.post h2 a:hover, .post h2 a:focus-visible { color: var(--accent); }
+.post .byline { color: var(--ink-soft); font-size: 0.82rem; margin-top: auto; }
+
+footer {
+  border-top: 1px solid var(--rule); text-align: center; padding: 2rem;
+  color: var(--ink-soft); font-size: 0.85rem;
+}
+</style>
+
+<header>
+  <span class="brand">Consumer Finance + Privacy Counsel</span>
+  <nav><a href="#">Home</a><a href="#">Blog</a><a href="#">About</a><a href="#">Subscribe</a></nav>
+</header>
+
+<div class="hero">
+  <span class="badge">A Womble Bond Dickinson Blog</span>
+  <h1>Consumer finance law, explained by the people <em>writing</em> it.</h1>
+  <p>We track every case that changes how you're contacted, charged, and reported on — and translate it the day it's decided.</p>
+  <div class="cta">
+    <input type="email" placeholder="you@email.com" aria-label="Email address">
+    <button>Get updates</button>
+  </div>
+</div>
+
+<h2 class="section-title">Latest</h2>
+<div class="posts">
+  <div class="post">
+    <span class="tag">TCPA · 9th Circuit</span>
+    <h2><a href="#">9th Cir. Reverses Dismissal of TCPA Suit Over Real Estate Solicitation Messages</a></h2>
+    <span class="byline">Scott Hyman · Aug 2, 2026</span>
+  </div>
+  <div class="post">
+    <span class="tag">Privacy</span>
+    <h2><a href="#">Federal Court Largely Denies Motion to Dismiss in Cookie Banner Malfunction Case</a></h2>
+    <span class="byline">Genevieve Walser-Jolly · Mar 28, 2026</span>
+  </div>
+  <div class="post">
+    <span class="tag">CIPA</span>
+    <h2><a href="#">Federal Court Dismisses CIPA § 638.51 Claim Over TikTok Tracking Software</a></h2>
+    <span class="byline">Genevieve Walser-Jolly · Mar 28, 2026</span>
+  </div>
+  <div class="post">
+    <span class="tag">Legislation</span>
+    <h2><a href="#">Washington HB 2274 Reduces Statutory Damages Under CEMA</a></h2>
+    <span class="byline">Genevieve Walser-Jolly · Mar 24, 2026</span>
+  </div>
+  <div class="post">
+    <span class="tag">Bank Fraud</span>
+    <h2><a href="#">Court Allows Fraud and UCC Refund Claims in Wire Transfer Case</a></h2>
+    <span class="byline">Genevieve Walser-Jolly · Mar 22, 2026</span>
+  </div>
+  <div class="post">
+    <span class="tag">CIPA</span>
+    <h2><a href="#">Superior Court: Tracking Software Isn't a "Trap and Trace Device"</a></h2>
+    <span class="byline">Genevieve Walser-Jolly · Mar 22, 2026</span>
+  </div>
+</div>
+
+<footer>A Womble Bond Dickinson (US) Blog · Privacy Policy</footer>

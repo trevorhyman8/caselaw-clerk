@@ -1,0 +1,120 @@
+<title>Concept 5 — Precedent</title>
+<style>
+:root {
+  --ground: #f0efe9;
+  --panel: #ffffff;
+  --ink: #0d0d0c;
+  --ink-soft: #56564f;
+  --rule: #d6d4c8;
+  --accent: #1447e6;
+  --stamp: rgba(13,13,12,0.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #0b0c0e; --panel: #16181b; --ink: #f2f1ea; --ink-soft: #9a9a90; --rule: #2b2d2c; --accent: #7c9bff; --stamp: rgba(242,241,234,0.05); }
+}
+:root[data-theme="dark"] { --ground: #0b0c0e; --panel: #16181b; --ink: #f2f1ea; --ink-soft: #9a9a90; --rule: #2b2d2c; --accent: #7c9bff; --stamp: rgba(242,241,234,0.05); }
+:root[data-theme="light"] { --ground: #f0efe9; --panel: #ffffff; --ink: #0d0d0c; --ink-soft: #56564f; --rule: #d6d4c8; --accent: #1447e6; --stamp: rgba(13,13,12,0.05); }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: "Helvetica Neue", Arial, system-ui, sans-serif; }
+
+header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.2rem 2rem; font-weight: 800; letter-spacing: -0.01em;
+}
+header nav { display: flex; gap: 1.6rem; font-weight: 500; font-size: 0.9rem; }
+header nav a { color: var(--ink-soft); text-decoration: none; }
+header nav a:hover, header nav a:focus-visible { color: var(--accent); }
+
+.hero {
+  position: relative; overflow: hidden; padding: 4.5rem 2rem 3.5rem;
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+}
+.hero .stamp {
+  position: absolute; right: -2rem; top: 50%; transform: translateY(-50%);
+  font-size: 13rem; font-weight: 900; color: var(--stamp); letter-spacing: -0.04em;
+  white-space: nowrap; pointer-events: none; user-select: none;
+}
+.hero .content { max-width: 42rem; position: relative; }
+.hero .eyebrow {
+  font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--accent);
+  font-weight: 700; letter-spacing: 0.04em; margin: 0 0 1rem;
+}
+.hero h1 {
+  font-size: clamp(2.4rem, 6.5vw, 4rem); font-weight: 900; letter-spacing: -0.035em;
+  line-height: 0.98; margin: 0 0 1.1rem; text-wrap: balance;
+}
+.hero p { font-size: 1.1rem; color: var(--ink-soft); max-width: 34em; margin: 0; }
+
+.rail {
+  max-width: 74rem; margin: 0 auto; padding: 2.5rem 2rem 4.5rem;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0;
+}
+.entry {
+  padding: 1.6rem 1.6rem 1.9rem; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  display: flex; flex-direction: column; gap: 0.9rem; min-height: 12rem;
+}
+.entry:nth-child(3n) { border-right: none; }
+.entry .statute {
+  font-family: ui-monospace, monospace; font-weight: 800; font-size: 1.6rem;
+  color: var(--accent); letter-spacing: -0.02em;
+}
+.entry h2 { font-size: 1.05rem; font-weight: 700; line-height: 1.35; margin: 0; flex: 1; }
+.entry h2 a { color: var(--ink); text-decoration: none; }
+.entry h2 a:hover, .entry h2 a:focus-visible { color: var(--accent); }
+.entry .meta { font-size: 0.78rem; color: var(--ink-soft); font-weight: 500; }
+
+footer {
+  text-align: center; padding: 2rem; border-top: 1px solid var(--rule);
+  font-size: 0.82rem; color: var(--ink-soft); font-weight: 500;
+}
+</style>
+
+<header>
+  <span>CF+PC</span>
+  <nav><a href="#">Home</a><a href="#">Blog</a><a href="#">About</a><a href="#">Subscribe</a></nav>
+</header>
+
+<div class="hero">
+  <div class="stamp">§227</div>
+  <div class="content">
+    <p class="eyebrow">WOMBLE BOND DICKINSON (US)</p>
+    <h1>Precedent moves fast. So do we.</h1>
+    <p>Consumer Finance + Privacy Counsel tracks the rulings that redraw FDCPA, TCPA, FCRA, and CCPA/CIPA practice — filed the day they're decided.</p>
+  </div>
+</div>
+
+<div class="rail">
+  <div class="entry">
+    <span class="statute">§227</span>
+    <h2><a href="#">9th Cir. Reverses Dismissal of TCPA Suit Over Real Estate Solicitation Messages</a></h2>
+    <span class="meta">9th Circuit · S. Hyman · 08.02.26</span>
+  </div>
+  <div class="entry">
+    <span class="statute">CIPA</span>
+    <h2><a href="#">Federal Court Largely Denies MTD in Cookie Banner Malfunction Class Action</a></h2>
+    <span class="meta">N.D. Cal. · G. Walser-Jolly · 03.28.26</span>
+  </div>
+  <div class="entry">
+    <span class="statute">638.51</span>
+    <h2><a href="#">Federal Court Dismisses CIPA Claim Over TikTok Tracking Software</a></h2>
+    <span class="meta">C.D. Cal. · G. Walser-Jolly · 03.28.26</span>
+  </div>
+  <div class="entry">
+    <span class="statute">CEMA</span>
+    <h2><a href="#">Washington HB 2274 Reduces Statutory Damages Under CEMA</a></h2>
+    <span class="meta">WA Legislature · G. Walser-Jolly · 03.24.26</span>
+  </div>
+  <div class="entry">
+    <span class="statute">UCC</span>
+    <h2><a href="#">Court Allows Fraud and UCC Refund Claims in Wire Transfer Case</a></h2>
+    <span class="meta">Cal. Super. Ct. · G. Walser-Jolly · 03.22.26</span>
+  </div>
+  <div class="entry">
+    <span class="statute">632.7</span>
+    <h2><a href="#">Superior Court: Tracking Software Isn't a "Trap and Trace Device"</a></h2>
+    <span class="meta">Cal. Super. Ct. · G. Walser-Jolly · 03.22.26</span>
+  </div>
+</div>
+
+<footer>A WOMBLE BOND DICKINSON (US) BLOG — PRIVACY POLICY</footer>

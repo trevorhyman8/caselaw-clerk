@@ -1,0 +1,114 @@
+<title>Concept 4 — The Brief</title>
+<style>
+:root {
+  --ground: #ffffff;
+  --ink: #111111;
+  --ink-soft: #555555;
+  --rule: #111111;
+  --rule-light: #cccccc;
+  --accent: #1a2a5e;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #131313; --ink: #ececec; --ink-soft: #a3a3a3; --rule: #ececec; --rule-light: #3a3a3a; --accent: #7d94e0; }
+}
+:root[data-theme="dark"] { --ground: #131313; --ink: #ececec; --ink-soft: #a3a3a3; --rule: #ececec; --rule-light: #3a3a3a; --accent: #7d94e0; }
+:root[data-theme="light"] { --ground: #ffffff; --ink: #111111; --ink-soft: #555555; --rule: #111111; --rule-light: #cccccc; --accent: #1a2a5e; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: Georgia, "Times New Roman", ui-serif, serif; }
+
+.masthead {
+  max-width: 50rem; margin: 0 auto; padding: 2.2rem 1.5rem 0.6rem;
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: ui-monospace, "Courier New", monospace; font-size: 0.72rem;
+  letter-spacing: 0.04em; color: var(--ink-soft); text-transform: uppercase;
+}
+.title-block { max-width: 50rem; margin: 0 auto; padding: 0.6rem 1.5rem 1.2rem; border-bottom: 4px solid var(--rule); }
+.title-block h1 {
+  font-size: clamp(2rem, 6vw, 3.1rem); text-align: center; margin: 0.2rem 0 0.3rem;
+  font-weight: 700; letter-spacing: -0.01em; text-wrap: balance;
+}
+.title-block .sub {
+  text-align: center; font-style: italic; color: var(--ink-soft); margin: 0; font-size: 1rem;
+}
+nav {
+  max-width: 50rem; margin: 0 auto; padding: 0.6rem 1.5rem; display: flex;
+  justify-content: center; gap: 2.2rem; border-bottom: 1px solid var(--rule-light);
+  font-family: ui-monospace, "Courier New", monospace; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+}
+nav a { color: var(--ink); text-decoration: none; }
+nav a:hover, nav a:focus-visible { color: var(--accent); }
+
+.columns {
+  max-width: 50rem; margin: 0 auto; padding: 2rem 1.5rem 1rem;
+  column-count: 2; column-gap: 2.4rem; column-rule: 1px solid var(--rule-light);
+}
+.lead-story { break-inside: avoid; margin-bottom: 1.8rem; }
+.lead-story .eyebrow {
+  font-family: ui-monospace, "Courier New", monospace; font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--accent); margin: 0 0 0.3rem;
+}
+.lead-story h2 { font-size: 1.15rem; line-height: 1.35; margin: 0 0 0.4rem; }
+.lead-story h2 a { color: var(--ink); text-decoration: none; }
+.lead-story p { font-size: 0.9rem; color: var(--ink-soft); margin: 0; }
+.lead-story .byline { font-size: 0.78rem; font-style: italic; color: var(--ink-soft); margin-top: 0.35rem; }
+
+.pull-quote {
+  break-inside: avoid; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  padding: 1rem 0; margin: 0 0 1.8rem; font-size: 1.1rem; font-style: italic; text-align: center;
+}
+.pull-quote cite { display: block; font-style: normal; font-size: 0.75rem; margin-top: 0.5rem; color: var(--ink-soft); font-family: ui-monospace, monospace; }
+
+footer {
+  max-width: 50rem; margin: 1rem auto 3rem; padding: 1.2rem 1.5rem 0; border-top: 4px solid var(--rule);
+  text-align: center; font-family: ui-monospace, "Courier New", monospace; font-size: 0.72rem;
+  color: var(--ink-soft); letter-spacing: 0.04em; text-transform: uppercase;
+}
+</style>
+
+<div class="masthead">
+  <span>Vol. XVIII — No. 214</span>
+  <span>Womble Bond Dickinson (US)</span>
+</div>
+<div class="title-block">
+  <h1>Consumer Finance + Privacy Counsel</h1>
+  <p class="sub">Navigating the rapidly developing landscape of consumer finance and privacy law — one case at a time.</p>
+</div>
+<nav><a href="#">Home</a><a href="#">Blog</a><a href="#">About</a><a href="#">Subscribe</a></nav>
+
+<div class="columns">
+  <div class="lead-story">
+    <p class="eyebrow">Ninth Circuit</p>
+    <h2><a href="#">9th Cir. Reverses Dismissal of TCPA Suit Over Real Estate Solicitation Messages</a></h2>
+    <p>Panel holds "telephone solicitation" turns on the purpose of initiating a call, not its content alone, reviving a putative class action.</p>
+    <p class="byline">Scott Hyman, Aug. 2, 2026</p>
+  </div>
+
+  <div class="pull-quote">
+    "Neither the statute nor the regulations require an explicit mention of a good, product, or service where the implication is clear from the context."
+    <cite>— Coffey v. Fast Easy Offer, LLC (9th Cir.)</cite>
+  </div>
+
+  <div class="lead-story">
+    <p class="eyebrow">Privacy</p>
+    <h2><a href="#">Federal Court Largely Denies Motion to Dismiss in Cookie Banner Malfunction Class Action</a></h2>
+    <p class="byline">Genevieve Walser-Jolly, Mar. 28, 2026</p>
+  </div>
+  <div class="lead-story">
+    <p class="eyebrow">CIPA</p>
+    <h2><a href="#">Federal Court Dismisses CIPA § 638.51 Claim Over TikTok Tracking Software</a></h2>
+    <p class="byline">Genevieve Walser-Jolly, Mar. 28, 2026</p>
+  </div>
+  <div class="lead-story">
+    <p class="eyebrow">Legislation</p>
+    <h2><a href="#">Washington HB 2274 Reduces Statutory Damages Under CEMA</a></h2>
+    <p class="byline">Genevieve Walser-Jolly, Mar. 24, 2026</p>
+  </div>
+  <div class="lead-story">
+    <p class="eyebrow">Bank Fraud</p>
+    <h2><a href="#">Court Allows Fraud and UCC Refund Claims in Wire Transfer Case</a></h2>
+    <p class="byline">Genevieve Walser-Jolly, Mar. 22, 2026</p>
+  </div>
+</div>
+
+<footer>A Womble Bond Dickinson (US) Blog — Privacy Policy</footer>

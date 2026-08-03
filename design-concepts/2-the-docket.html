@@ -1,0 +1,141 @@
+<title>Concept 2 — The Docket</title>
+<style>
+:root {
+  --ground: #f3f4f2;
+  --panel: #ffffff;
+  --ink: #10130f;
+  --ink-soft: #5c6259;
+  --rule: #d3d6cf;
+  --accent: #b5501f;
+  --new: #b5501f;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #0e1210; --panel: #161b17; --ink: #e7ebe4; --ink-soft: #8c9388; --rule: #2a312a; --accent: #e8834a; --new: #e8834a; }
+}
+:root[data-theme="dark"] { --ground: #0e1210; --panel: #161b17; --ink: #e7ebe4; --ink-soft: #8c9388; --rule: #2a312a; --accent: #e8834a; --new: #e8834a; }
+:root[data-theme="light"] { --ground: #f3f4f2; --panel: #ffffff; --ink: #10130f; --ink-soft: #5c6259; --rule: #d3d6cf; --accent: #b5501f; --new: #b5501f; }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+}
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.9rem 1.5rem; border-bottom: 1px solid var(--rule);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.75rem;
+}
+.topbar .brand { font-weight: 600; letter-spacing: 0.02em; }
+.topbar nav { display: flex; gap: 1.4rem; color: var(--ink-soft); }
+.topbar nav a { color: inherit; text-decoration: none; }
+.topbar nav a:hover, .topbar nav a:focus-visible { color: var(--accent); }
+
+.hero {
+  padding: 2.6rem 1.5rem 1.8rem; max-width: 64rem; margin: 0 auto;
+}
+.hero .docket-no {
+  font-family: ui-monospace, monospace; font-size: 0.75rem; color: var(--accent);
+  letter-spacing: 0.04em; margin: 0 0 0.6rem;
+}
+.hero h1 {
+  font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0 0 0.6rem; font-weight: 700;
+  letter-spacing: -0.02em; text-wrap: balance;
+}
+.hero p { color: var(--ink-soft); max-width: 42em; margin: 0; font-size: 1rem; }
+
+.ticker {
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  background: var(--panel); overflow: hidden; white-space: nowrap;
+  padding: 0.55rem 0; margin: 1.6rem 0 0;
+}
+.ticker span {
+  display: inline-block; padding-right: 3rem; font-family: ui-monospace, monospace;
+  font-size: 0.78rem; color: var(--ink-soft);
+}
+.ticker .dot { color: var(--new); }
+
+.grid {
+  max-width: 64rem; margin: 0 auto; padding: 2rem 1.5rem 4rem;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;
+}
+.card {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
+  padding: 1.1rem 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.6rem;
+}
+.card .row1 { display: flex; justify-content: space-between; align-items: center; }
+.chip {
+  font-family: ui-monospace, monospace; font-size: 0.68rem; letter-spacing: 0.04em;
+  text-transform: uppercase; padding: 0.18rem 0.5rem; border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.card .date { font-family: ui-monospace, monospace; font-size: 0.72rem; color: var(--ink-soft); }
+.card h2 {
+  font-size: 1rem; line-height: 1.4; margin: 0; font-weight: 600;
+}
+.card h2 a { color: var(--ink); text-decoration: none; }
+.card h2 a:hover, .card h2 a:focus-visible { color: var(--accent); }
+.card .filed {
+  font-family: ui-monospace, monospace; font-size: 0.7rem; color: var(--ink-soft);
+  border-top: 1px dashed var(--rule); padding-top: 0.55rem; margin-top: auto;
+  display: flex; justify-content: space-between;
+}
+
+footer {
+  border-top: 1px solid var(--rule); padding: 1.6rem 1.5rem; text-align: center;
+  font-family: ui-monospace, monospace; font-size: 0.72rem; color: var(--ink-soft);
+}
+</style>
+
+<div class="topbar">
+  <span class="brand">CONSUMER FINANCE + PRIVACY COUNSEL</span>
+  <nav><a href="#">Home</a><a href="#">Blog</a><a href="#">About</a><a href="#">Subscribe</a></nav>
+</div>
+
+<div class="hero">
+  <p class="docket-no">CFPC-BLOG · WOMBLE BOND DICKINSON (US)</p>
+  <h1>The docket for consumer finance &amp; privacy law.</h1>
+  <p>Every notable ruling on FDCPA, TCPA, FCRA, CCPA/CIPA, arbitration, and class-action practice — filed the day it's decided, tagged the way you'd search for it.</p>
+</div>
+
+<div class="ticker">
+  <span><span class="dot">●</span> NEW — 9th Cir. reverses TCPA dismissal, Coffey v. Fast Easy Offer</span>
+  <span>N.D. Cal. — cookie-banner privacy class action survives MTD</span>
+  <span>WA HB 2274 — CEMA statutory damages reduced</span>
+  <span>Cal. Superior Ct. — tracking pixel not a "trap and trace device"</span>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <div class="row1"><span class="chip">TCPA</span><span class="date">08.02.2026</span></div>
+    <h2><a href="#">9th Cir. Reverses Dismissal of TCPA Suit Over Real Estate Solicitation Messages</a></h2>
+    <div class="filed"><span>9th Cir.</span><span>S. Hyman</span></div>
+  </div>
+  <div class="card">
+    <div class="row1"><span class="chip">Privacy</span><span class="date">03.28.2026</span></div>
+    <h2><a href="#">Federal Court Largely Denies Motion to Dismiss in Cookie Banner Malfunction Privacy Class Action</a></h2>
+    <div class="filed"><span>N.D. Cal.</span><span>G. Walser-Jolly</span></div>
+  </div>
+  <div class="card">
+    <div class="row1"><span class="chip">CIPA</span><span class="date">03.28.2026</span></div>
+    <h2><a href="#">Federal Court Dismisses CIPA § 638.51 Claim Targeting TikTok Tracking Software</a></h2>
+    <div class="filed"><span>C.D. Cal.</span><span>G. Walser-Jolly</span></div>
+  </div>
+  <div class="card">
+    <div class="row1"><span class="chip">Legislation</span><span class="date">03.24.2026</span></div>
+    <h2><a href="#">Washington HB 2274 Reduces Statutory Damages Under CEMA</a></h2>
+    <div class="filed"><span>WA Leg.</span><span>G. Walser-Jolly</span></div>
+  </div>
+  <div class="card">
+    <div class="row1"><span class="chip">Bank Fraud</span><span class="date">03.22.2026</span></div>
+    <h2><a href="#">Court Allows Fraud and UCC Refund Claims to Proceed in Wire Transfer Case</a></h2>
+    <div class="filed"><span>Cal. Super. Ct.</span><span>G. Walser-Jolly</span></div>
+  </div>
+  <div class="card">
+    <div class="row1"><span class="chip">CIPA</span><span class="date">03.22.2026</span></div>
+    <h2><a href="#">Cal. Superior Court Rules Tracking Software Is Not a "Trap and Trace Device"</a></h2>
+    <div class="filed"><span>Cal. Super. Ct.</span><span>G. Walser-Jolly</span></div>
+  </div>
+</div>
+
+<footer>A WOMBLE BOND DICKINSON (US) BLOG — PRIVACY POLICY</footer>
