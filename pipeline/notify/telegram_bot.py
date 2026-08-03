@@ -131,20 +131,31 @@ async def _run_batch_and_reply(update: Update, conv: sm.Conversation, case_ids: 
             result = await loop.run_in_executor(None, run_draft_pipeline, case_id)
         except Exception as e:  # noqa: BLE001 — one case failing must not sink the others
             log.exception(f"draft pipeline failed for rank {rank} ({case_id})")
-            action = sm.draft_needs_review(conv, rank, [f"internal error: {e}"])
-            await update.message.reply_text(action.text)
-            return
-        if result["gate_verdict"] in ("pass", "warn"):
-            action = sm.draft_ready(
-                conv, rank, result["draft_id"], result["content_hash"],
-                result["report_card"], result["preview_url"], hook,
+            conv.pending_ranks.discard(rank)
+            if not conv.pending_ranks:
+                conv.state = sm.State.PREVIEW_SENT if conv.ready else sm.State.NEEDS_REVIEW
+            await update.message.reply_text(
+                f"{rank}️⃣ hit an internal error and produced nothing: {e}\n"
+                f"Reply the number again to retry, or pick a different case."
             )
-        else:
-            action = sm.draft_needs_review(conv, rank, result["reasons"])
+            return
+        action = _apply_pipeline_result(conv, rank, hook, result)
         await update.message.reply_text(action.text)
         _log_message("out", conv.telegram_user_id, action.text)
 
     await asyncio.gather(*(_one(cid, r) for cid, r in zip(case_ids, ranks)))
+
+
+def _apply_pipeline_result(conv: sm.Conversation, rank: int, hook: str, result: dict) -> sm.Action:
+    if result["gate_verdict"] in ("pass", "warn"):
+        return sm.draft_ready(
+            conv, rank, result["draft_id"], result["content_hash"],
+            result["report_card"], result["preview_url"], hook, result["gate_verdict"],
+        )
+    return sm.draft_needs_review(
+        conv, rank, result["draft_id"], result["content_hash"], result["reasons"],
+        report_card=result["report_card"], draft_text=result["draft_text"], preview_url=result["preview_url"],
+    )
 
 
 async def _run_revision_and_reply(update: Update, conv: sm.Conversation, rank: int | None, draft_id: str | None, instruction: str) -> None:
@@ -152,13 +163,7 @@ async def _run_revision_and_reply(update: Update, conv: sm.Conversation, rank: i
 
     hook = next((i["hook"] for i in conv.digest_items if i["rank"] == rank), f"case {rank}")
     result = run_revision_pipeline(draft_id, instruction)
-    if result["gate_verdict"] in ("pass", "warn"):
-        action = sm.draft_ready(
-            conv, rank, result["draft_id"], result["content_hash"],
-            result["report_card"], result["preview_url"], hook,
-        )
-    else:
-        action = sm.draft_needs_review(conv, rank, result["reasons"])
+    action = _apply_pipeline_result(conv, rank, hook, result)
     await update.message.reply_text(action.text)
 
 

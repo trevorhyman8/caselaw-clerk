@@ -71,6 +71,65 @@ def _store_draft(case_id: str, draft: dict, gate_result, artifact_sha256: str) -
     return draft_id
 
 
+MAX_AUTO_REPAIRS = 2  # up to 3 total attempts (1 original + 2 repairs) before giving up
+
+
+def _build_repair_instruction(gate_result, fact_sheet, case_meta: dict) -> str:
+    """Turns a failed gate result into a SPECIFIC instruction for the next
+    draft attempt — not "try again", but exactly what was wrong and what to
+    do about it. This is what makes the retry loop actually converge
+    instead of repeating the same mistake."""
+    lines = ["Your previous draft failed verification. Fix the SPECIFIC problems below — do not just rewrite generally:"]
+
+    failed_quotes = [
+        s for s in gate_result.provenance.get("quote_map", []) if s.get("tier") == "fail"
+    ]
+    for s in failed_quotes:
+        lines.append(
+            f'- This quoted passage could NOT be found verbatim in the source opinion: '
+            f'"{s["text"]}". Either quote it EXACTLY as it appears in the opinion text you were '
+            f'given (character for character), or replace it with a different real passage that '
+            f'actually supports the same point.'
+        )
+
+    closing = gate_result.provenance.get("citations", {}).get("closing", [])
+    for check in closing:
+        if not check.get("passed"):
+            lines.append(
+                f'- The closing citation\'s "{check["field"]}" field did not match the case record '
+                f'(expected: {case_meta.get(check["field"] if check["field"] != "party_names" else "case_name")!r}). '
+                f'Fix the closing citation to match exactly.'
+            )
+
+    other = gate_result.provenance.get("citations", {}).get("other", [])
+    for c in other:
+        if not c.get("passed"):
+            lines.append(
+                f'- This citation in your intro/commentary could not be verified: "{c["raw"]}". '
+                f'Remove it unless it appears verbatim in the source opinion.'
+            )
+
+    fact_fails = [
+        a["name"] for a in gate_result.provenance.get("fact_assertions", []) if not a.get("passed")
+    ]
+    if "holding_direction" in fact_fails:
+        lines.append(
+            f"- Your intro stated the wrong outcome. The court's actual holding direction is: "
+            f"'{fact_sheet.holding_direction}'. Rewrite the intro sentence to correctly state this "
+            f"— this is the most important fix; a wrong outcome is the worst possible error here."
+        )
+    if "posture" in fact_fails:
+        lines.append(f"- Your intro didn't clearly name the procedural posture: '{fact_sheet.posture}'. State it explicitly.")
+    if "judge" in fact_fails:
+        lines.append(f"- Your intro should name the deciding judge: {case_meta.get('judge')}.")
+
+    violations = gate_result.provenance.get("adversarial", {}).get("violations", [])
+    for v in violations:
+        lines.append(f'- Unsupported claim: "{v["draft_text"]}" — {v["why"]}. Remove or fix this.')
+
+    return "\n".join(lines)
+
+
 def run_draft_pipeline(case_id: str, angle: str | None = None) -> dict:
     case, artifact = _load_case_and_artifact(case_id)
     opinion_text = artifact["content_text"]
@@ -85,17 +144,32 @@ def run_draft_pipeline(case_id: str, angle: str | None = None) -> dict:
     exemplars = retrieve(statutes=fact_sheet.statutes, court_id=case["court_id"], posture=fact_sheet.posture, limit=3)
     frozen_categories = _frozen_categories()
 
-    draft = draft_post(case_meta, opinion_text, fact_sheet, exemplars, frozen_categories, artifact["sha256"], angle)
-
     cl_client = CourtListenerClient() if settings.courtlistener_token else None
     try:
-        gate_result = run_gate(draft, case_meta, opinion_text, fact_sheet, artifact["sha256"], cl_client)
+        draft, gate_result, attempts = None, None, 0
+        current_angle = angle
+        for attempt in range(MAX_AUTO_REPAIRS + 1):
+            attempts = attempt + 1
+            draft = draft_post(case_meta, opinion_text, fact_sheet, exemplars, frozen_categories, artifact["sha256"], current_angle)
+            gate_result = run_gate(draft, case_meta, opinion_text, fact_sheet, artifact["sha256"], cl_client)
+            if gate_result.verdict in ("pass", "warn"):
+                break
+            if attempt < MAX_AUTO_REPAIRS:
+                repair = _build_repair_instruction(gate_result, fact_sheet, case_meta)
+                current_angle = f"{angle}\n\n{repair}" if angle else repair
     finally:
         if cl_client:
             cl_client.close()
 
+    # Always store and return whatever the LAST attempt produced — a
+    # needs_review draft is still real content Scott can read, edit, or
+    # decide is fine; it just can't be published without a fix (see
+    # run_publish's hard gate_status check). Silence was the actual bug
+    # here, not the verification failing.
     draft_id = _store_draft(case_id, draft, gate_result, artifact["sha256"])
     report_card = render_report_card(gate_result, case["case_name"], case["court_id"], artifact["source_url"])
+    if attempts > 1:
+        report_card = f"({attempts} attempts — auto-repair {'succeeded' if gate_result.verdict != 'needs_review' else 'did not fully resolve every issue'})\n\n" + report_card
 
     return {
         "draft_id": draft_id,
@@ -103,8 +177,19 @@ def run_draft_pipeline(case_id: str, angle: str | None = None) -> dict:
         "gate_verdict": gate_result.verdict,
         "reasons": gate_result.reasons,
         "report_card": report_card,
+        "attempts": attempts,
+        "draft_text": _render_draft_text(draft),
         "preview_url": f"https://preview.example/d/{draft_id}",  # real preview host TBD, see SETUP.md
     }
+
+
+def _render_draft_text(draft: dict) -> str:
+    parts = [draft.get("intro", "")]
+    for block in draft.get("blocks", []):
+        prefix = "> " if block.get("type") == "quote" else ""
+        parts.append(prefix + block.get("text", ""))
+    parts.append(draft.get("closing_citation") or "")
+    return "\n\n".join(p for p in parts if p)
 
 
 def run_revision_pipeline(draft_id: str, edit_instruction: str) -> dict:

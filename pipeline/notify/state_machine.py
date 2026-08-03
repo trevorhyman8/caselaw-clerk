@@ -59,8 +59,11 @@ class Conversation:
     state: State = State.IDLE
     digest_items: list[dict] = field(default_factory=list)  # [{case_id, rank, hook}]
     pending_ranks: set[int] = field(default_factory=set)
-    ready: dict[int, dict] = field(default_factory=dict)  # rank -> {case_id, draft_id, content_hash, report_card, preview_url}
-    needs_review_ranks: dict[int, list[str]] = field(default_factory=dict)  # rank -> reasons
+    # rank -> {draft_id, content_hash, hook, gate_status, reasons}. Holds
+    # BOTH publishable (pass/warn) and needs_review drafts — unified so
+    # "edit 4" can find and re-draft a needs_review item just as easily as
+    # a clean one; only the publish path discriminates on gate_status.
+    ready: dict[int, dict] = field(default_factory=dict)
     published_ranks: set[int] = field(default_factory=set)
     confirm_rank: int | None = None
     confirm_publish_expires_at: datetime | None = None
@@ -115,7 +118,6 @@ def _resolve_candidates(conv: Conversation, slot: str) -> list[dict]:
 def _start_batch(conv: Conversation, items: list[dict]) -> Action:
     conv.pending_ranks = {item["rank"] for item in items}
     conv.ready = {}
-    conv.needs_review_ranks = {}
     conv.state = State.DRAFTING
     if len(items) == 1:
         text = f"On it — drafting {items[0]['hook']}. I'll message you when it's ready."
@@ -153,13 +155,19 @@ def handle(conv: Conversation, intent: str, slot: str | None, raw_text: str) -> 
             return Action("send_message", text="OK — I'll include these in Saturday's recap if you want to revisit.")
         return Action("send_message", text=f"Not sure what you mean — {CANDIDATE_REF_MAP_HELP}")
 
-    if conv.state in (State.DRAFTING, State.PREVIEW_SENT):
+    if conv.state in (State.DRAFTING, State.PREVIEW_SENT, State.NEEDS_REVIEW):
         # Even while some cases are still drafting, Scott can act on ones
         # that are already ready (e.g. "publish 1" while 3 is still cooking).
         if intent == "approve_publish":
             rank = _target_rank(conv, slot)
             if rank is None:
                 return Action("send_message", text=_ambiguous_rank_message(conv, "publish"))
+            if conv.ready[rank].get("gate_status") not in ("pass", "warn"):
+                return Action(
+                    "send_message",
+                    text=f"{rank}️⃣ hasn't cleared verification yet, so it can't be published. "
+                         f"Reply 'edit {rank}: ...' to fix it, or handle it manually in WordPress.",
+                )
             conv.confirm_rank = rank
             conv.state = State.CONFIRM_PUBLISH
             title = conv.ready[rank].get("hook", f"case {rank}")
@@ -221,7 +229,7 @@ def handle(conv: Conversation, intent: str, slot: str | None, raw_text: str) -> 
         conv.state = State.PREVIEW_SENT
         return Action("send_message", text="Not published — reply 'publish N' again if you'd like to.")
 
-    if conv.state in (State.PUBLISHED, State.DISCARDED, State.NEEDS_REVIEW):
+    if conv.state in (State.PUBLISHED, State.DISCARDED):
         return Action(
             "send_message",
             text="That one's already wrapped up. Say 'status' or wait for tomorrow's digest.",
@@ -230,10 +238,14 @@ def handle(conv: Conversation, intent: str, slot: str | None, raw_text: str) -> 
     return Action("send_message", text="No digest is active right now. Check back at the next morning digest, or say 'recap' to see the past week.")
 
 
-def draft_ready(conv: Conversation, rank: int, draft_id: str, content_hash: str, report_card: str, preview_url: str, hook: str) -> Action:
-    conv.ready[rank] = {"draft_id": draft_id, "content_hash": content_hash, "hook": hook}
+def draft_ready(
+    conv: Conversation, rank: int, draft_id: str, content_hash: str,
+    report_card: str, preview_url: str, hook: str, gate_status: str = "pass",
+) -> Action:
+    conv.ready[rank] = {
+        "draft_id": draft_id, "content_hash": content_hash, "hook": hook, "gate_status": gate_status,
+    }
     conv.pending_ranks.discard(rank)
-    conv.needs_review_ranks.pop(rank, None)
     if not conv.pending_ranks:
         conv.state = State.PREVIEW_SENT
     how_to_publish = f"publish {rank}" if len(conv.digest_items) > 1 else "publish"
@@ -241,15 +253,35 @@ def draft_ready(conv: Conversation, rank: int, draft_id: str, content_hash: str,
     return Action("send_message", text=text)
 
 
-def draft_needs_review(conv: Conversation, rank: int, reasons: list[str]) -> Action:
+def draft_needs_review(
+    conv: Conversation, rank: int, draft_id: str, content_hash: str, reasons: list[str],
+    report_card: str | None = None, draft_text: str | None = None, preview_url: str | None = None,
+) -> Action:
+    """Still delivers the draft — a failed gate means "don't auto-publish
+    this," not "show Scott nothing." Stored in `ready` alongside clean
+    drafts (gate_status="needs_review") so "edit N" can find and re-draft
+    it exactly like any other item; only the publish path discriminates on
+    gate_status (see the approve_publish branch in `handle`). Publishing
+    stays hard-blocked regardless — that check is enforced again in
+    pipeline/jobs/draft_case.py::run_publish, not just here."""
+    conv.ready[rank] = {
+        "draft_id": draft_id, "content_hash": content_hash, "hook": f"case {rank}",
+        "gate_status": "needs_review", "reasons": reasons,
+    }
     conv.pending_ranks.discard(rank)
-    conv.needs_review_ranks[rank] = reasons
-    if not conv.pending_ranks and not conv.ready:
-        conv.state = State.NEEDS_REVIEW
-    elif not conv.pending_ranks:
-        conv.state = State.PREVIEW_SENT
-    text = f"{rank}️⃣ didn't clear verification and needs a human look:\n" + "\n".join(f"- {r}" for r in reasons)
-    return Action("send_message", text=text)
+    if not conv.pending_ranks:
+        has_actionable = any(v.get("gate_status") in ("pass", "warn") for v in conv.ready.values())
+        conv.state = State.PREVIEW_SENT if has_actionable else State.NEEDS_REVIEW
+
+    parts = [f"{rank}️⃣ didn't clear verification — here's what it has:"]
+    if report_card:
+        parts.append(report_card)
+    if draft_text:
+        parts.append(f"--- draft text ---\n{draft_text}")
+    if preview_url:
+        parts.append(f"Preview: {preview_url}")
+    parts.append(f"Not publishable as-is (reply 'edit {rank}: ...' to try a fix, or handle it manually).")
+    return Action("send_message", text="\n\n".join(parts))
 
 
 def _target_rank(conv: Conversation, slot: str | None) -> int | None:
@@ -266,5 +298,8 @@ def _target_rank(conv: Conversation, slot: str | None) -> int | None:
 def _ambiguous_rank_message(conv: Conversation, verb: str) -> str:
     if not conv.ready:
         return "Nothing's ready yet — I'll message you as soon as a draft clears."
-    options = ", ".join(str(r) for r in sorted(conv.ready))
+    options = ", ".join(
+        f"{r}{'' if v.get('gate_status') in ('pass', 'warn') else ' (needs a fix first)'}"
+        for r, v in sorted(conv.ready.items())
+    )
     return f"Which one? Reply '{verb} N' — ready: {options}"
