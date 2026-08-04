@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caselaw Clerk — Lunch Walkthrough</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light">
+<style>
+  :root{
+    --ink:#23344A;
+    --blue:#003073;
+    --blue-hover:#2A61AD;
+    --blue-deep:#16336D;
+    --sky:#39A7DB;
+    --amber:#FFBF00;
+    --amber-deep:#8A6D00;
+    --red:#E44630;
+    --good:#1E7A4A;
+    --good-bg:rgba(30,122,74,.10);
+    --amber-bg:rgba(255,191,0,.14);
+    --gray-100:#F4F6F7;
+    --gray-150:#EDF0F2;
+    --gray-200:#E0E0E6;
+    --gray-300:#CCCCCC;
+    --gray-600:#6A6A6A;
+    --white:#FFFFFF;
+    --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+    height:100%; margin:0; background:#fff; color:var(--ink);
+    font-family:var(--font); color-scheme:light;
+    -webkit-font-smoothing:antialiased;
+  }
+  body{ overflow:hidden; }
+  .deck{ position:fixed; inset:0; background:#fff; }
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center;
+    padding: 4.4vh 6.4vw; opacity:0; visibility:hidden; transition:opacity .32s ease;
+  }
+  .slide.active{ opacity:1; visibility:visible; }
+  .slide-inner{ max-width:1360px; margin:0 auto; width:100%; }
+
+  .kicker{
+    font-size:.78rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--blue); margin:0 0 10px;
+  }
+  .kicker-bar{ width:46px; height:4px; background:var(--amber); border-radius:2px; margin-bottom:22px; }
+  h1.title{
+    font-size:clamp(1.9rem, 3.6vw, 3.15rem); font-weight:700; line-height:1.18; margin:0 0 20px; color:var(--ink);
+    max-width:1080px;
+  }
+  h2.headline{
+    font-size:clamp(1.5rem, 2.5vw, 2.25rem); font-weight:700; line-height:1.28; margin:0 0 30px; color:var(--ink);
+    max-width:1020px;
+  }
+  p.lede{ font-size:1.02rem; line-height:1.6; color:var(--ink); max-width:820px; }
+  .muted{ color:var(--gray-600); }
+  .callout{
+    border-left:3px solid var(--amber); background:var(--gray-100); padding:12px 18px;
+    font-size:.92rem; line-height:1.5; max-width:640px; margin-top:auto;
+  }
+  .callout strong{ font-weight:700; }
+  .subhead-italic{ font-style:italic; color:var(--gray-600); font-size:1rem; margin:0 0 34px; }
+
+  .cols-2{ display:grid; grid-template-columns:1fr 1fr; gap:44px; align-items:start; }
+  .cols-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; align-items:start; }
+
+  .icon{ width:26px; height:26px; display:block; }
+
+  /* pipeline */
+  .pipeline{ display:flex; align-items:flex-start; gap:2px; margin-bottom:8px; }
+  .pnode{ display:flex; flex-direction:column; align-items:center; text-align:center; flex:1; min-width:0; }
+  .pnode .circ{
+    width:62px; height:62px; border-radius:50%; background:#fff; border:2px solid var(--blue);
+    display:flex; align-items:center; justify-content:center; margin-bottom:12px; color:var(--blue);
+  }
+  .pnode.gate .circ{ border-color:var(--amber); border-width:3px; color:var(--amber-deep); }
+  .pnode .plabel{ font-weight:700; font-size:.86rem; margin-bottom:4px; color:var(--ink); }
+  .pnode .pdesc{ font-size:.74rem; line-height:1.4; color:var(--gray-600); max-width:150px; }
+  .parrow{ flex:none; align-self:flex-start; margin-top:20px; color:var(--gray-300); font-size:1.5rem; padding:0 2px; }
+  .stopbar{
+    margin:22px auto 0; max-width:520px; text-align:center; border:1.5px solid var(--red); color:var(--red);
+    font-weight:700; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; border-radius:8px; padding:8px 14px;
+  }
+
+  /* phone mockup */
+  .phone-wrap{ display:flex; justify-content:center; align-items:flex-start; gap:56px; }
+  .phone{ width:330px; flex:none; background:#fff; border:9px solid var(--ink); border-radius:32px; overflow:hidden; box-shadow:0 22px 50px rgba(35,52,74,.22); }
+  .phone-head{ background:var(--gray-100); padding:9px 16px; font-size:.72rem; color:var(--gray-600); text-align:center; border-bottom:1px solid var(--gray-200); font-weight:600; }
+  .phone-body{ padding:14px; display:flex; flex-direction:column; gap:9px; background:#EAF0F6; min-height:430px; }
+  .bubble-time{ font-size:.62rem; color:var(--gray-600); text-align:center; margin:4px 0 -2px; }
+  .bubble{ max-width:90%; padding:9px 12px; border-radius:14px; font-size:.72rem; line-height:1.42; white-space:pre-line; }
+  .bubble.bot{ align-self:flex-start; background:#fff; border:1px solid var(--gray-200); border-bottom-left-radius:4px; color:var(--ink); }
+  .bubble.you{ align-self:flex-end; background:var(--blue); color:#fff; border-bottom-right-radius:4px; }
+  .bubble.verified{ border:1.5px solid var(--good); }
+  .phone-notes{ max-width:380px; }
+  .phone-notes .note{ font-size:.88rem; line-height:1.55; margin-bottom:14px; color:var(--ink); }
+  .gloss-box{ background:var(--gray-100); border-radius:10px; padding:14px 16px; font-size:.82rem; line-height:1.5; margin-top:18px; }
+  .gloss-box b{ color:var(--blue); }
+
+  /* weight chart */
+  .weight-row{ display:grid; grid-template-columns:112px 1fr 92px; align-items:center; gap:12px; margin-bottom:11px; }
+  .weight-row .wlabel{ font-size:.8rem; font-weight:700; color:var(--ink); }
+  .weight-track{ background:var(--gray-100); border-radius:6px; height:13px; overflow:hidden; }
+  .weight-fill{ background:var(--blue); height:100%; border-radius:6px; }
+  .weight-val{ font-size:.72rem; color:var(--gray-600); text-align:right; font-variant-numeric:tabular-nums; }
+  .stat-tile{ background:var(--gray-100); border-radius:12px; padding:26px 24px; text-align:center; }
+  .stat-num{ font-size:2.5rem; font-weight:700; color:var(--blue); line-height:1; }
+  .stat-label{ font-size:.82rem; color:var(--gray-600); margin-top:8px; line-height:1.4; }
+
+  /* locker */
+  .locker-flow{ display:flex; align-items:center; gap:20px; margin:8px 0 22px; }
+  .locker-node{ display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .locker-node .circ{ width:70px; height:70px; border-radius:50%; border:2px solid var(--blue); color:var(--blue); display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
+  .locker-node.vault .circ{ border-color:var(--amber); border-width:3px; color:var(--amber-deep); }
+  .locker-node .llabel{ font-size:.78rem; font-weight:700; color:var(--ink); }
+  .locker-arrow{ color:var(--gray-300); font-size:1.6rem; }
+  .hash-chip{ display:inline-block; background:var(--ink); color:#D9E6F2; font-family:var(--mono); font-size:.78rem; padding:6px 12px; border-radius:6px; margin-top:4px; }
+
+  /* gate layers */
+  .gate-layer{ display:flex; gap:16px; align-items:flex-start; padding:13px 0; border-bottom:1px solid var(--gray-200); }
+  .gate-layer:last-child{ border-bottom:none; }
+  .gate-num{ width:32px; height:32px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.86rem; flex:none; }
+  .gate-layer.hardstop .gate-num{ background:var(--red); box-shadow:0 0 0 3px rgba(228,70,48,.18); }
+  .gate-title{ font-weight:700; font-size:.92rem; color:var(--ink); margin-bottom:3px; }
+  .gate-desc{ font-size:.82rem; line-height:1.48; color:var(--gray-600); }
+  .hardstop-tag{ display:inline-block; font-size:.65rem; font-weight:700; letter-spacing:.05em; color:var(--red); background:rgba(228,70,48,.09); padding:2px 8px; border-radius:4px; margin-left:8px; vertical-align:1px; }
+
+  /* tool rows (actual software slide) */
+  .tool-row{ display:grid; grid-template-columns:44px 190px 1fr; gap:16px; align-items:start; padding:13px 0; border-bottom:1px solid var(--gray-200); }
+  .tool-row:last-child{ border-bottom:none; }
+  .tool-row .circ{ width:44px; height:44px; border-radius:50%; background:#fff; border:2px solid var(--blue); color:var(--blue); display:flex; align-items:center; justify-content:center; }
+  .tool-row .icon{ width:22px; height:22px; }
+  .tool-label{ font-weight:700; font-size:.86rem; color:var(--ink); margin-bottom:6px; }
+  .ai-tag{ display:inline-block; font-size:.6rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:2px 7px; border-radius:4px; }
+  .ai-tag.no-ai{ color:var(--good); background:var(--good-bg); }
+  .ai-tag.ai{ color:var(--blue); background:rgba(0,48,115,.08); }
+  .ai-tag.mixed{ color:var(--amber-deep); background:var(--amber-bg); }
+  .tool-chips{ margin:0 0 6px; }
+  .tool-chip{ display:inline-block; background:var(--gray-150); color:var(--ink); font-family:var(--mono); font-size:.7rem; padding:3px 9px; border-radius:5px; margin:0 6px 6px 0; }
+  .tool-desc{ font-size:.82rem; line-height:1.52; color:var(--gray-600); max-width:760px; }
+
+  /* catch cards */
+  .catch-card{ background:var(--gray-100); border-radius:10px; padding:16px 18px; }
+  .catch-card.real{ background:#fff; border:1.5px solid var(--blue); }
+  .catch-tag{ font-size:.64rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--gray-600); }
+  .catch-card.real .catch-tag{ color:var(--blue); background:rgba(0,48,115,.08); padding:2px 8px; border-radius:4px; }
+  .catch-title{ font-weight:700; font-size:.86rem; margin:8px 0 5px; color:var(--ink); }
+  .catch-body{ font-size:.78rem; line-height:1.48; color:var(--gray-600); }
+  .catch-body em{ font-style:italic; color:var(--ink); }
+  .foot-note{ font-size:.78rem; color:var(--gray-600); margin-top:16px; line-height:1.5; max-width:900px; }
+
+  /* real draft split */
+  .split{ display:grid; grid-template-columns:1.15fr 1fr; gap:26px; align-items:start; }
+  .blogpost{ background:#fff; border:1px solid var(--gray-200); border-radius:10px; padding:20px 24px; }
+  .blogpost .bp-kicker{ font-size:.65rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--gray-600); margin-bottom:8px; }
+  .blogpost h3{ font-size:.98rem; margin:0 0 6px; color:var(--ink); line-height:1.34; }
+  .blogpost .byline{ font-size:.72rem; color:var(--gray-600); margin-bottom:12px; }
+  .blogpost p{ font-size:.78rem; line-height:1.55; margin:0 0 10px; color:var(--ink); }
+  .blogpost blockquote{ margin:12px 0; padding:9px 13px; border-left:3px solid var(--amber); background:var(--gray-100); font-style:italic; font-size:.78rem; line-height:1.5; }
+  .tag-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .tag{ font-size:.62rem; text-transform:uppercase; letter-spacing:.03em; padding:3px 8px; border:1px solid var(--gray-300); border-radius:20px; color:var(--gray-600); }
+  .report-card{ background:#0F1B2D; color:#D9E6F2; border-radius:10px; padding:18px 20px; font-family:var(--mono); font-size:.76rem; line-height:1.62; }
+  .report-card .head{ color:#fff; font-weight:700; margin-bottom:6px; }
+  .report-card .ok{ color:#5FD088; }
+  .report-card .src{ margin-top:10px; color:#9FB2C6; font-size:.71rem; word-break:break-all; }
+  .split-footer{ font-size:.78rem; color:var(--gray-600); margin-top:12px; grid-column:1 / -1; }
+
+  /* coverage doors */
+  .doors{ display:flex; gap:20px; margin-bottom:8px; }
+  .door{ flex:1; background:var(--gray-100); border-radius:10px; padding:16px 18px; }
+  .door .circ{ width:44px; height:44px; border-radius:50%; background:#fff; border:2px solid var(--blue); color:var(--blue); display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+  .door .dtitle{ font-weight:700; font-size:.84rem; margin-bottom:5px; color:var(--ink); }
+  .door .dbody{ font-size:.76rem; line-height:1.5; color:var(--gray-600); }
+  .door .dbody b{ color:var(--ink); }
+
+  /* cost table */
+  .cost-row{ display:grid; grid-template-columns:200px 100px 1fr; gap:16px; align-items:start; padding:13px 0; border-bottom:1px solid var(--gray-200); }
+  .cost-row:last-child{ border-bottom:none; }
+  .cost-name{ font-weight:700; font-size:.86rem; color:var(--ink); }
+  .cost-price{ font-size:.84rem; color:var(--blue); font-weight:700; }
+  .cost-desc{ font-size:.8rem; line-height:1.5; color:var(--gray-600); }
+
+  /* status board */
+  .status-col{ border-radius:10px; overflow:hidden; border:1px solid var(--gray-200); }
+  .status-head{ padding:12px 16px; font-weight:700; font-size:.82rem; }
+  .status-head.proven{ background:var(--good-bg); color:var(--good); }
+  .status-head.built{ background:var(--amber-bg); color:var(--amber-deep); }
+  .status-head.needs{ background:var(--gray-100); color:var(--blue); }
+  .status-body{ padding:14px 16px; }
+  .status-body ul{ margin:0; padding-left:18px; font-size:.76rem; line-height:1.55; color:var(--ink); }
+  .status-body li{ margin-bottom:7px; }
+
+  /* generalization */
+  .gen-col h4{ font-size:.86rem; font-weight:700; color:var(--ink); margin:0 0 12px; }
+  .gen-col ul{ margin:0; padding-left:18px; font-size:.84rem; line-height:1.6; color:var(--ink); }
+  .gen-col li{ margin-bottom:8px; }
+  .gen-connector{ text-align:center; font-size:.85rem; color:var(--gray-600); margin:20px 0; font-style:italic; }
+
+  /* ask cards */
+  .ask-card{ background:var(--gray-100); border-radius:10px; padding:18px 20px; position:relative; }
+  .ask-num{ width:28px; height:28px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.8rem; margin-bottom:12px; }
+  .ask-title{ font-weight:700; font-size:.9rem; margin-bottom:8px; color:var(--ink); }
+  .ask-body{ font-size:.78rem; line-height:1.52; color:var(--gray-600); }
+
+  /* glossary */
+  .glossary{ display:grid; grid-template-columns:1fr 1fr; gap:14px 40px; }
+  .gterm{ font-size:.84rem; line-height:1.5; padding-bottom:12px; border-bottom:1px solid var(--gray-200); }
+  .gterm b{ color:var(--blue); }
+
+  /* nav */
+  .nav{ position:fixed; bottom:22px; right:26px; display:flex; align-items:center; gap:12px; z-index:50; }
+  .nav button{
+    width:38px; height:38px; border-radius:50%; border:1.5px solid var(--gray-300); background:#fff; color:var(--blue);
+    font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.15s;
+  }
+  .nav button:hover{ border-color:var(--blue); background:var(--gray-100); }
+  .nav button:disabled{ opacity:.3; cursor:default; }
+  .nav .counter{ font-size:.78rem; color:var(--gray-600); font-variant-numeric:tabular-nums; min-width:46px; text-align:center; }
+  .dots{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:50; }
+  .dot{ width:6px; height:6px; border-radius:50%; background:var(--gray-300); cursor:pointer; }
+  .dot.active{ background:var(--amber); width:18px; border-radius:3px; }
+  .deck-label{ position:fixed; bottom:22px; left:26px; font-size:.72rem; color:var(--gray-300); letter-spacing:.05em; text-transform:uppercase; z-index:50; }
+
+  @media print{
+    body{ overflow:visible; }
+    .slide{ position:static; opacity:1; visibility:visible; page-break-after:always; height:100vh; }
+    .nav, .dots, .deck-label{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0" aria-hidden="true">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6" stroke="currentColor" stroke-width="1.7" fill="none"/><line x1="14.6" y1="14.6" x2="20" y2="20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-funnel" viewBox="0 0 24 24"><path d="M3 4H21L14 12.5V19L10 21V12.5L3 4Z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M14.5 4.5L19.5 9.5L8 21H3V16L14.5 4.5Z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><line x1="12" y1="7" x2="17" y2="12" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M7.5 12.5L10.3 15.3L16.5 8.5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2" stroke="currentColor" stroke-width="1.6" fill="none"/><line x1="10" y1="19" x2="14" y2="19" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.6" fill="none"/><line x1="8" y1="8" x2="16" y2="8" stroke="currentColor" stroke-width="1.4"/><line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1.4"/><line x1="8" y1="16" x2="13" y2="16" stroke="currentColor" stroke-width="1.4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="12" cy="15.5" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M6 2.5H14L18 6.5V21.5H6Z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M14 2.5V6.5H18" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M3.5 6.5L12 13L20.5 6.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-rss" viewBox="0 0 24 24"><circle cx="5.5" cy="18.5" r="1.7" fill="currentColor"/><path d="M4 11a9 9 0 019 9" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/><path d="M4 5a15 15 0 0115 15" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h13M17 8l-3.5-3.5M17 8l-3.5 3.5" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16H7M7 16l3.5-3.5M7 16l3.5 3.5" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1 — Title -->
+  <section class="slide active" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">Consumer Finance &amp; Privacy Counsel · Caselaw Clerk</div>
+      <div class="kicker-bar"></div>
+      <h1 class="title">Every morning, a draft post about the day&rsquo;s most interesting decision &mdash; written in your voice, checked against the opinion, and waiting on your phone before you get to the office.</h1>
+      <p class="subhead-italic">A working walkthrough for Scott Hyman and Genevieve &middot; August 4, 2026 &middot; presented by Trevor</p>
+      <div class="callout"><strong>The one rule that matters most:</strong> nothing publishes without you typing &ldquo;publish,&rdquo; then confirming &ldquo;yes.&rdquo;</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2 — Morning routine -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">01 &middot; A Normal Morning</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">Your entire involvement is three short replies &mdash; a number, &ldquo;publish,&rdquo; and &ldquo;yes.&rdquo;</h2>
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="phone-head">Telegram &middot; Caselaw Clerk</div>
+          <div class="phone-body">
+            <div class="bubble-time">5:45 AM</div>
+            <div class="bubble bot">3 new decisions worth a look:
+1&#65039;&#8419; CD Cal: TCPA good-faith defense survives MTD
+2&#65039;&#8419; 9th Cir: FCRA &mdash; no standing for bare &sect; 1681e(b) claim
+3&#65039;&#8419; ND Cal: file-transfer vendor isn't a CCPA 'business'
+Reply a number to draft, or 'skip'.</div>
+            <div class="bubble you">1</div>
+            <div class="bubble-time">~90 seconds later</div>
+            <div class="bubble bot verified">&#9989; VERIFIED &mdash; 4/4 quotes checked, citation confirmed, holding direction confirmed, independent audit clean.
+Preview: [link]
+Reply 'publish', or tell me what to change.</div>
+            <div class="bubble you">publish</div>
+            <div class="bubble bot">Publishing to consumerfinanceprivacycounsel.com. Reply YES to confirm.</div>
+            <div class="bubble you">yes</div>
+            <div class="bubble bot verified">&#9989; Published: [link]</div>
+          </div>
+        </div>
+        <div class="phone-notes">
+          <div class="note">If nothing that day is worth writing about, it stays silent &mdash; no &ldquo;nothing today&rdquo; noise every morning.</div>
+          <div class="note">Saturdays bring a recap of anything skipped during the week, in case it's worth a second look.</div>
+          <div class="gloss-box"><b>Telegram</b> &mdash; a free texting app. The system shows up as a contact you message, the same as texting a person.</div>
+          <div class="foot-note" style="margin-top:14px;">Illustrative morning, straight from the system's own plain-language guide &mdash; a real drafted case appears on slide 9.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3 — Pipeline -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">02 &middot; How It Works</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">Five specialists hand off to each other overnight. You hold the only publish key.</h2>
+      <div class="pipeline">
+        <div class="pnode"><div class="circ"><svg class="icon"><use href="#i-search"/></svg></div><div class="plabel">Researcher</div><div class="pdesc">Watches public court records all day; downloads the court's own PDF the moment a matching decision appears.</div></div>
+        <div class="parrow">&rarr;</div>
+        <div class="pnode"><div class="circ"><svg class="icon"><use href="#i-funnel"/></svg></div><div class="plabel">Editor</div><div class="pdesc">Scores each case by your own historical interests; sends the top picks as the morning digest.</div></div>
+        <div class="parrow">&rarr;</div>
+        <div class="pnode"><div class="circ"><svg class="icon"><use href="#i-pencil"/></svg></div><div class="plabel">Writer</div><div class="pdesc">Drafts the post in your voice &mdash; forbidden from adding any legal claim the opinion doesn't contain.</div></div>
+        <div class="parrow">&rarr;</div>
+        <div class="pnode gate"><div class="circ"><svg class="icon"><use href="#i-check"/></svg></div><div class="plabel">Fact-checker</div><div class="pdesc">Four independent checks. Doesn't trust the writer.</div></div>
+        <div class="parrow">&rarr;</div>
+        <div class="pnode"><div class="circ"><svg class="icon"><use href="#i-phone"/></svg></div><div class="plabel">Your phone</div><div class="pdesc">You approve, edit, or skip.</div></div>
+        <div class="parrow">&rarr;</div>
+        <div class="pnode"><div class="circ"><svg class="icon"><use href="#i-doc"/></svg></div><div class="plabel">Blog draft</div><div class="pdesc">Lands as an unpublished draft. Nothing more, until you say so.</div></div>
+      </div>
+      <div class="stopbar">Typed &ldquo;publish&rdquo; + &ldquo;yes&rdquo; only &mdash; between your phone and the blog</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4 — Actual software -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">03 &middot; The Actual Software</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">The same six hand-offs, with the name on each toolbox. AI holds the pen in exactly three places &mdash; everything else is ordinary, checkable code.</h2>
+
+      <div class="tool-row">
+        <div class="circ"><svg class="icon"><use href="#i-search"/></svg></div>
+        <div><div class="tool-label">Researcher</div><span class="ai-tag no-ai">No AI</span></div>
+        <div>
+          <div class="tool-chips"><span class="tool-chip">CourtListener API</span><span class="tool-chip">courts.ca.gov</span><span class="tool-chip">CFPB newsroom feed</span></div>
+          <div class="tool-desc">A listener, not a thinker. Polls the Free Law Project&rsquo;s CourtListener database, reads the California Courts&rsquo; own opinion pages (where unpublished decisions live), and watches the CFPB newsroom. On a match it downloads the court&rsquo;s official PDF and seals it in the evidence locker.</div>
+        </div>
+      </div>
+
+      <div class="tool-row">
+        <div class="circ"><svg class="icon"><use href="#i-funnel"/></svg></div>
+        <div><div class="tool-label">Editor</div><span class="ai-tag no-ai">No AI</span></div>
+        <div>
+          <div class="tool-chips"><span class="tool-chip">a Python scoring script</span><span class="tool-chip">a weights file</span></div>
+          <div class="tool-desc">Arithmetic. Court weight &times; topic points &mdash; the weights counted from your 2,939 posts &mdash; plus small bonuses for posture and familiar judges. The same case always gets the same score; there is nothing to hallucinate.</div>
+        </div>
+      </div>
+
+      <div class="tool-row">
+        <div class="circ"><svg class="icon"><use href="#i-pencil"/></svg></div>
+        <div><div class="tool-label">Writer</div><span class="ai-tag ai">AI &mdash; Claude</span></div>
+        <div>
+          <div class="tool-chips"><span class="tool-chip">Claude Sonnet 5 (Anthropic)</span></div>
+          <div class="tool-desc">The one place AI holds the pen. Its standing instructions are the voice guide distilled from your archive; it is handed the three most similar posts you actually wrote plus the sealed opinion &mdash; and a hard rule: no legal knowledge from its own training. None.</div>
+        </div>
+      </div>
+
+      <div class="tool-row">
+        <div class="circ"><svg class="icon"><use href="#i-check"/></svg></div>
+        <div><div class="tool-label">Fact-checker</div><span class="ai-tag mixed">Mostly no AI</span></div>
+        <div>
+          <div class="tool-chips"><span class="tool-chip">exact text matching</span><span class="tool-chip">eyecite + Citation Lookup</span><span class="tool-chip">a fresh Claude call</span></div>
+          <div class="tool-desc">The quote and holding checks are plain code &mdash; character-for-character matching, no judgment involved. Citations run through eyecite and the Free Law Project&rsquo;s Citation Lookup service, built to catch fabricated cites. Only the fourth layer is AI: a fresh Claude call with no style guide and no hint it&rsquo;s grading &ldquo;a draft&rdquo; &mdash; it can fail a draft, never rescue one.</div>
+        </div>
+      </div>
+
+      <div class="tool-row">
+        <div class="circ"><svg class="icon"><use href="#i-phone"/></svg></div>
+        <div><div class="tool-label">Your phone</div><span class="ai-tag mixed">AI reads, code decides</span></div>
+        <div>
+          <div class="tool-chips"><span class="tool-chip">Telegram bot</span><span class="tool-chip">a state machine</span></div>
+          <div class="tool-desc">A free Telegram bot that answers only your account &mdash; strangers get silence, not even an error message. Claude only interprets what you typed; deterministic code holds the keys, and typed &ldquo;publish&rdquo; then &ldquo;yes&rdquo; within 10 minutes is the only path through it.</div>
+        </div>
+      </div>
+
+      <div class="tool-row">
+        <div class="circ"><svg class="icon"><use href="#i-doc"/></svg></div>
+        <div><div class="tool-label">Blog draft</div><span class="ai-tag no-ai">No AI</span></div>
+        <div>
+          <div class="tool-chips"><span class="tool-chip">WordPress.com official API</span></div>
+          <div class="tool-desc">Plain code talking to WordPress.com&rsquo;s official interface with credentials you create. &ldquo;Draft&rdquo; status is hard-coded &mdash; and until you flip publishing mode yourself, the publishing connection is never even created.</div>
+        </div>
+      </div>
+
+      <div class="foot-note">All of it runs in one small container on Railway &mdash; a receiver awake 24/7 for court alerts and your texts, and a scheduler that ticks every 30 minutes and decides what&rsquo;s due.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5 — Corpus -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">04 &middot; Where Its Judgment Comes From</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">Its taste and its voice aren't invented. Both are counted directly from 2,939 of your own posts.</h2>
+      <div class="cols-2">
+        <div>
+          <div class="weight-row"><div class="wlabel">FDCPA</div><div class="weight-track"><div class="weight-fill" style="width:100%"></div></div><div class="weight-val">10 &middot; 911 posts</div></div>
+          <div class="weight-row"><div class="wlabel">TCPA</div><div class="weight-track"><div class="weight-fill" style="width:100%"></div></div><div class="weight-val">10 &middot; 846 posts</div></div>
+          <div class="weight-row"><div class="wlabel">FCRA</div><div class="weight-track"><div class="weight-fill" style="width:80%"></div></div><div class="weight-val">8 &middot; 366 posts</div></div>
+          <div class="weight-row"><div class="wlabel">Class actions</div><div class="weight-track"><div class="weight-fill" style="width:70%"></div></div><div class="weight-val">7 &middot; 438 posts</div></div>
+          <div class="weight-row"><div class="wlabel">Privacy</div><div class="weight-track"><div class="weight-fill" style="width:70%"></div></div><div class="weight-val">7 &middot; 198+ posts</div></div>
+          <div class="weight-row"><div class="wlabel">Arbitration</div><div class="weight-track"><div class="weight-fill" style="width:60%"></div></div><div class="weight-val">6 &middot; 167 posts</div></div>
+          <div class="weight-row"><div class="wlabel">Regulatory</div><div class="weight-track"><div class="weight-fill" style="width:60%"></div></div><div class="weight-val">6 &middot; 287 posts</div></div>
+          <div class="weight-row"><div class="wlabel">UCL</div><div class="weight-track"><div class="weight-fill" style="width:50%"></div></div><div class="weight-val">5 &middot; 172 posts</div></div>
+          <div class="foot-note">Scoring weight (left bar) next to the actual historical post count it was derived from. Not a guess &mdash; counted.</div>
+        </div>
+        <div>
+          <div class="stat-tile">
+            <div class="stat-num">2,939</div>
+            <div class="stat-label">posts, 2008&ndash;2023 &middot; the Severson &amp; Werson archive it learned your voice and citation habits from</div>
+          </div>
+          <div class="gloss-box" style="margin-top:18px;">The archive itself stays off the public code repository on purpose &mdash; it's your writing, not generic code, and ships to the system separately from Trevor.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6 — Evidence locker -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">05 &middot; Where The Facts Come From</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">It is never allowed to write from memory &mdash; only from the court's own PDF, fingerprinted and sealed.</h2>
+      <div class="cols-2">
+        <div>
+          <div class="locker-flow">
+            <div class="locker-node"><div class="circ"><svg class="icon"><use href="#i-pdf"/></svg></div><div class="llabel">Court's PDF</div></div>
+            <div class="locker-arrow">&rarr;</div>
+            <div class="locker-node vault"><div class="circ"><svg class="icon"><use href="#i-lock"/></svg></div><div class="llabel">Evidence locker</div></div>
+          </div>
+          <div class="hash-chip">sha256 ad56c0ea5734&hellip;</div>
+          <p class="lede" style="margin-top:18px; font-size:.88rem;">The system never asks an AI &ldquo;what did this case say?&rdquo; It downloads the court's actual PDF from an official source, stores the exact text, and computes a <b>sha256 fingerprint</b> &mdash; a code generated from the document itself. Change one character anywhere in it, and the code changes. A tamper-evident seal.</p>
+        </div>
+        <div>
+          <p class="lede" style="font-size:.9rem;">The record is <b>append-only</b> &mdash; nothing downstream (drafting, checking, publishing) can edit or delete what's captured. &ldquo;A case file that only grows.&rdquo;</p>
+          <div class="gloss-box">Real example: <i>Coffey v. Fast Easy Offer, LLC</i> &mdash; fetched from <span style="word-break:break-all">cdn.ca9.uscourts.gov</span>, fingerprint <span class="hash-chip" style="margin:0 0 0 4px;">ad56c0ea5734&hellip;</span></div>
+          <p class="lede" style="margin-top:16px; font-size:.9rem;">Every later step &mdash; drafting, checking, publishing &mdash; is only ever allowed to read that stored document, never an AI's general knowledge of the law.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 7 — The gate -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">06 &middot; The Fact-Checker</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">Four independent checks stand between every draft and your phone. All four must pass.</h2>
+      <div class="gate-layer">
+        <div class="gate-num">1</div>
+        <div><div class="gate-title">Every quote, word for word</div><div class="gate-desc">Checked character-for-character against the stored opinion. Not &ldquo;sounds right&rdquo; &mdash; an exact, mechanical match.</div></div>
+      </div>
+      <div class="gate-layer">
+        <div class="gate-num">2</div>
+        <div><div class="gate-title">Every citation, cross-checked</div><div class="gate-desc">Party names, docket, court, and date checked against the case record. Any other case mentioned is checked against a lookup tool the Free Law Project built specifically to catch fabricated citations.</div></div>
+      </div>
+      <div class="gate-layer hardstop">
+        <div class="gate-num">3</div>
+        <div><div class="gate-title">The facts, extracted before a word is drafted<span class="hardstop-tag">Hard stop</span></div><div class="gate-desc">Judge, posture, and which way the court ruled &mdash; verified first. Getting the winner and loser backwards is the worst thing this system could do to your name, so that check has no shortcuts: a mismatch means a full rewrite, not a patch.</div></div>
+      </div>
+      <div class="gate-layer">
+        <div class="gate-num">4</div>
+        <div><div class="gate-title">A second, independent AI, told to be hostile</div><div class="gate-desc">No style guide, no idea it's reviewing &ldquo;a draft.&rdquo; Its only job: list anything it can't trace straight back to the opinion.</div></div>
+      </div>
+      <div class="foot-note">Any single failure routes the draft to you. Nothing gets &ldquo;cleaned up&rdquo; quietly.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 8 — What it caught -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">07 &middot; Proof, Not A Promise</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">It has already caught a flipped holding, a fabricated dissent, and something a careful reviewer could plausibly miss.</h2>
+      <div class="cols-2" style="grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="catch-card">
+          <span class="catch-tag">Planted test</span>
+          <div class="catch-title">Reversed &rarr; Affirmed</div>
+          <div class="catch-body">One word flipped in a real quote &mdash; the opposite legal outcome. Caught instantly by the word-for-word check.</div>
+        </div>
+        <div class="catch-card">
+          <span class="catch-tag">Planted test</span>
+          <div class="catch-title">A fabricated damages figure and a fabricated dissent</div>
+          <div class="catch-body">Invented for a deliberately corrupted test draft. Both caught by the independent, hostile reviewer.</div>
+        </div>
+        <div class="catch-card real">
+          <span class="catch-tag">Real draft</span>
+          <div class="catch-title">A subtle sourcing error</div>
+          <div class="catch-body">The court's own opinion states its Summary section &ldquo;<em>constitutes no part of the opinion of the court</em>.&rdquo; A real draft quoted that summary correctly &mdash; but credited it to the judge's own reasoning. Layer 4 caught it; the first three layers, and a human skimming quickly, plausibly wouldn't have.</div>
+        </div>
+        <div class="catch-card real">
+          <span class="catch-tag">Real draft</span>
+          <div class="catch-title">Same case, two outcomes</div>
+          <div class="catch-body"><em>Howard v. Republican National Committee</em> was drafted twice. One draft's quotes checked out (4/4 exact, 58% of the body verbatim from the opinion) and passed. The other had a quote that didn't match the opinion word-for-word &mdash; quote coverage fell to 41%, below the system's own floor &mdash; and it was routed to needs&#8209;review instead of publishing.</div>
+        </div>
+      </div>
+      <div class="foot-note">It has also refused to pass a draft when the underlying PDF text extraction itself glitched at a page break &mdash; choosing to ask a human rather than guess (documented candidly in the repo's own <span style="font-family:var(--mono)">GAPS.md</span>).</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9 — Real output -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">08 &middot; A Real Example</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline" style="margin-bottom:20px;">A real draft of a real Ninth Circuit decision. Seven of seven quotes verified exactly.</h2>
+      <div class="split">
+        <div class="blogpost">
+          <div class="bp-kicker">Draft &middot; consumerfinanceprivacycounsel.com</div>
+          <h3>9th Cir. Reverses Dismissal, Holds TCPA &lsquo;Telephone Solicitation&rsquo; Turns on the Purpose of Initiating the Call or Message</h3>
+          <div class="byline">Coffey v. Fast Easy Offer, LLC, No. 25-4066 (9th Cir. June 4, 2026)</div>
+          <p>In <i>Coffey v. Fast Easy Offer, LLC,</i> No. 25-4066, &mdash;&mdash;&mdash; F.4th &mdash;&mdash;&mdash;&mdash; (9th Cir. June 4, 2026), the Court of Appeals for the Ninth Circuit reversed the dismissal of a putative class action for failure to state a claim, holding that the plaintiff adequately pleaded that the calls and text messages at issue qualified as &ldquo;telephone solicitations&rdquo; under the Telephone Consumer Protection Act.</p>
+          <blockquote>&ldquo;[N]either the statute nor the regulations require an explicit mention of a good, product, or service where the implication is clear from the context.&rdquo;</blockquote>
+          <div class="tag-row">
+            <span class="tag">TCPA</span><span class="tag">Solicitation of Goods &amp; Services</span><span class="tag">Do-Not-Call Registry</span><span class="tag">Class Actions</span>
+          </div>
+        </div>
+        <div class="report-card">
+          <div class="head">&#9989; VERIFIED &mdash; Coffey v. Fast Easy Offer, LLC (ca9)</div>
+          <div>&#9500;&#9472; Quotes: <span class="ok">7/7</span> passages verified verbatim (67% of body is the court's own words)</div>
+          <div>&#9500;&#9472; Citation: <span class="ok">&#10003;</span> all fields matched</div>
+          <div>&#9500;&#9472; Facts: posture <span class="ok">&#10003;</span> &middot; holding direction <span class="ok">&#10003;</span></div>
+          <div>&#9492;&#9472; Independent AI audit: <span class="ok">0</span> unsupported claims found</div>
+          <div class="src">Source: cdn.ca9.uscourts.gov/datastore/opinions/2026/06/04/25-4066.pdf<br>Evidence sha256: ad56c0ea5734&hellip;<br>(3 drafting attempts &mdash; auto-repair succeeded before you ever saw it)</div>
+        </div>
+        <div class="split-footer">One of 5 real drafts, from 4 real cases, sitting in the system right now &mdash; not a mockup.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10 — Coverage -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">09 &middot; How It Finds Cases</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">Three ways cases get in. The best one needs no new software on your side.</h2>
+      <div class="doors">
+        <div class="door">
+          <div class="circ"><svg class="icon"><use href="#i-rss"/></svg></div>
+          <div class="dtitle">Automated feeds</div>
+          <div class="dbody"><b>CourtListener</b> &mdash; a nonprofit's free, searchable archive of federal and state court opinions, run by the Free Law Project &mdash; plus California Courts and the CFPB's newsroom feed, checked continuously.</div>
+        </div>
+        <div class="door">
+          <div class="circ"><svg class="icon"><use href="#i-lock"/></svg></div>
+          <div class="dtitle">The honest number</div>
+          <div class="dbody">Tested against 20 of your own old posts <b>without</b> the paid membership, the free tier alone found only <b>20%</b> of them. Most of what you've historically written about are unpublished district-court orders &mdash; the ~$10/month membership's alert tools close most of that gap.</div>
+        </div>
+        <div class="door">
+          <div class="circ"><svg class="icon"><use href="#i-mail"/></svg></div>
+          <div class="dtitle">You, directly</div>
+          <div class="dbody">Text the bot a case name, a docket number, or forward a Westlaw alert email you already get. Works regardless of the other two doors, and is likely the <b>highest-coverage</b> path of the three.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 11 — Cost -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">10 &middot; What It Costs</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">Roughly $25&ndash;40 a month &mdash; less than one hour of your own billing time.</h2>
+      <div class="cols-2">
+        <div>
+          <div class="cost-row"><div class="cost-name">Railway</div><div class="cost-price">$10&ndash;15/mo</div><div class="cost-desc">A computer that's always on, somewhere else. A laptop that's asleep can't send a 5:45 AM digest.</div></div>
+          <div class="cost-row"><div class="cost-name">Free Law Project</div><div class="cost-price">~$10/mo</div><div class="cost-desc">Unlocks the alert tools that catch unpublished decisions &mdash; the 20% story from the previous slide.</div></div>
+          <div class="cost-row"><div class="cost-name">Anthropic API</div><div class="cost-price">$10&ndash;20/mo</div><div class="cost-desc">The actual thinking &mdash; reading the opinion, writing the draft, running the checks. Billed per use, roughly 20&ndash;65&cent; per drafted post.</div></div>
+          <div class="cost-row"><div class="cost-name">Telegram</div><div class="cost-price">$0</div><div class="cost-desc">Free, no reason to reconsider.</div></div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-num">$25&ndash;40</div>
+          <div class="stat-label">per month, total &mdash; for context, less than an hour of your own billing time</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 12 — Honest status -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">11 &middot; Where Things Actually Stand</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">What's proven, what's built but never fired, and what can't move without you.</h2>
+      <div class="cols-3">
+        <div class="status-col">
+          <div class="status-head proven">Proven against live cases</div>
+          <div class="status-body"><ul>
+            <li>Finding and downloading real current cases from public court records</li>
+            <li>Learning your voice from your archive</li>
+            <li>Drafting a post in that voice</li>
+            <li>All four verification layers, including catching planted errors</li>
+            <li>The full conversation flow, draft to publish</li>
+          </ul></div>
+        </div>
+        <div class="status-col">
+          <div class="status-head built">Built, never live-tested</div>
+          <div class="status-body"><ul>
+            <li>The WordPress connection &mdash; code complete, needs your credentials</li>
+            <li>The 24/7 server deployment</li>
+            <li>CFPB's feed works; FCC's is currently blocked by their own servers</li>
+          </ul></div>
+        </div>
+        <div class="status-col">
+          <div class="status-head needs">Needs you</div>
+          <div class="status-body"><ul>
+            <li>The accounts (the Next Step slide)</li>
+            <li>A shadow week before it ever touches the real blog</li>
+            <li>Your explicit sign-off before the blog connection exists at all</li>
+          </ul></div>
+        </div>
+      </div>
+      <div class="foot-note">The gaps are written down in the repo, not discovered later &mdash; <span style="font-family:var(--mono)">GAPS.md</span> is part of the deliverable.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 13 — Generalization -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">12 &middot; Beyond One Blog</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">A version for another practice is a swap, not a rebuild.</h2>
+      <div class="cols-2">
+        <div class="gen-col">
+          <h4>Built once, shared by any version</h4>
+          <ul>
+            <li>The researcher and the evidence locker</li>
+            <li>All four verification layers</li>
+            <li>The Telegram approval flow</li>
+            <li>Draft-only publishing</li>
+          </ul>
+        </div>
+        <div class="gen-col">
+          <h4><svg class="icon" style="width:18px;height:18px;vertical-align:-3px;color:var(--amber-deep)"><use href="#i-swap"/></svg>&nbsp; Swapped per version</h4>
+          <ul>
+            <li>The writing archive it learns voice from</li>
+            <li>The topic weights it scores cases by</li>
+            <li>Which courts and feeds it watches</li>
+            <li>Which blog it drafts to</li>
+          </ul>
+        </div>
+      </div>
+      <div class="gen-connector">&ldquo;That works either way &mdash; a second voice on the same blog, or a separate system for a separate one. Same machinery either time.&rdquo;</div>
+      <div class="foot-note">Its voice is only as good as the archive it learns from &mdash; building that archive is the real work, not the software.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 14 — The ask -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">13 &middot; Next Step</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">The next step risks nothing: a one-week shadow run where it can't touch the blog, and you grade it.</h2>
+      <div class="cols-3">
+        <div class="ask-card">
+          <div class="ask-num">1</div>
+          <div class="ask-title">Accounts &mdash; one sitting, ~30 minutes</div>
+          <div class="ask-body">CourtListener, Railway, and an Anthropic API key &mdash; plus a free, 2-minute Telegram bot. Trevor walks through it with you. The WordPress connection comes deliberately last.</div>
+        </div>
+        <div class="ask-card">
+          <div class="ask-num">2</div>
+          <div class="ask-title">A shadow week</div>
+          <div class="ask-body">At least 7 mornings of digests where nothing can publish. Each morning, you compare its picks against what you'd actually have blogged about.</div>
+        </div>
+        <div class="ask-card">
+          <div class="ask-num">3</div>
+          <div class="ask-title">You set the bar</div>
+          <div class="ask-body">Afterward: the verification writeup, several real drafts with report cards, and proof the gate catches a corrupted draft. Only if you're satisfied does the blog connection get built &mdash; and it stays draft-only until you separately turn it on.</div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:26px;"><strong>You hold every key.</strong> The accounts are yours, the settings are yours, and nothing publishes without you typing &ldquo;publish,&rdquo; then &ldquo;yes.&rdquo;</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 15 — Glossary -->
+  <section class="slide" data-slide>
+    <div class="slide-inner">
+      <div class="kicker">Appendix &middot; For Reference</div>
+      <div class="kicker-bar"></div>
+      <h2 class="headline">Every piece of software in this deck, one line each.</h2>
+      <div class="glossary">
+        <div class="gterm"><b>CourtListener / RECAP</b> &mdash; a nonprofit's free, searchable archive of federal and state court opinions and dockets, run by the Free Law Project.</div>
+        <div class="gterm"><b>Telegram</b> &mdash; a free texting app. The system shows up as a contact you message.</div>
+        <div class="gterm"><b>Railway</b> &mdash; a company that rents a small computer that never sleeps. That's where the system lives.</div>
+        <div class="gterm"><b>WordPress.com</b> &mdash; the service hosting the blog. The system can leave unpublished drafts there. Nothing more, until Scott says so.</div>
+        <div class="gterm"><b>Claude / Anthropic API</b> &mdash; the AI doing the reading, writing, and checking. &ldquo;API&rdquo; just means the metered, pay-per-use way a server talks to it, instead of a person typing at a keyboard.</div>
+        <div class="gterm"><b>sha256 fingerprint</b> &mdash; a code computed from a document. Change one character, the code changes. A tamper-evident seal.</div>
+        <div class="gterm"><b>RSS</b> &mdash; a standard way a website announces &ldquo;here's what's new,&rdquo; which the researcher reads automatically.</div>
+        <div class="gterm"><b>Shadow mode</b> &mdash; everything runs. Nothing can publish.</div>
+        <div class="gterm"><b>eyecite</b> &mdash; free software from the Free Law Project that finds every legal citation in a block of text.</div>
+        <div class="gterm"><b>State machine</b> &mdash; a small piece of ordinary code that can only move between a fixed set of steps in a fixed order. It's what makes &ldquo;publish&rdquo; then &ldquo;yes&rdquo; the only path to publishing.</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="deck-label">Caselaw Clerk</div>
+<div class="dots" id="dots"></div>
+<div class="nav">
+  <button id="prevBtn" aria-label="Previous slide">&larr;</button>
+  <div class="counter"><span id="cur">1</span> / <span id="total">14</span></div>
+  <button id="nextBtn" aria-label="Next slide">&rarr;</button>
+</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('[data-slide]'));
+  var total = slides.length;
+  var idx = 0;
+  var curEl = document.getElementById('cur');
+  var totalEl = document.getElementById('total');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var dotsWrap = document.getElementById('dots');
+  totalEl.textContent = total;
+
+  slides.forEach(function(_, i){
+    var d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', function(){ go(i); });
+    dotsWrap.appendChild(d);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+
+  function render(){
+    slides.forEach(function(s, i){ s.classList.toggle('active', i === idx); });
+    dots.forEach(function(d, i){ d.classList.toggle('active', i === idx); });
+    curEl.textContent = idx + 1;
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === total - 1;
+  }
+  function go(i){ idx = Math.max(0, Math.min(total - 1, i)); render(); }
+  function next(){ go(idx + 1); }
+  function prev(){ go(idx - 1); }
+
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { e.preventDefault(); go(0); }
+    else if (e.key === 'End') { e.preventDefault(); go(total - 1); }
+  });
+
+  var touchX = null;
+  document.addEventListener('touchstart', function(e){ touchX = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if (touchX === null) return;
+    var dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
+    touchX = null;
+  }, {passive:true});
+
+  render();
+})();
+</script>
+
+</body>
+</html>
